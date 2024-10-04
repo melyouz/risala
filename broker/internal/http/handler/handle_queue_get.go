@@ -9,8 +9,8 @@ import (
 
 func HandleQueueGet(queueRepository storage.QueueRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		name := chi.URLParam(r, "name")
-		queue, err := queueRepository.GetQueue(name)
+		queueName := chi.URLParam(r, "queueName")
+		queue, err := queueRepository.GetQueue(queueName)
 		if err != nil {
 			util.Respond(w, err, util.HttpStatusCodeFromAppError(err))
 			return

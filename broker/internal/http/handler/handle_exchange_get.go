@@ -9,8 +9,8 @@ import (
 
 func HandleExchangeGet(exchangeRepository storage.ExchangeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		name := chi.URLParam(r, "name")
-		exchange, err := exchangeRepository.GetExchange(name)
+		exchangeName := chi.URLParam(r, "exchangeName")
+		exchange, err := exchangeRepository.GetExchange(exchangeName)
 		if err != nil {
 			util.Respond(w, err, util.HttpStatusCodeFromAppError(err))
 			return

@@ -9,8 +9,8 @@ import (
 
 func HandleExchangeDelete(exchangeRepository storage.ExchangeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		name := chi.URLParam(r, "name")
-		err := exchangeRepository.DeleteExchange(name)
+		exchangeName := chi.URLParam(r, "exchangeName")
+		err := exchangeRepository.DeleteExchange(exchangeName)
 		if err != nil {
 			util.Respond(w, err, util.HttpStatusCodeFromAppError(err))
 			return

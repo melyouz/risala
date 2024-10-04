@@ -9,8 +9,8 @@ import (
 
 func HandleQueueDelete(queueRepository storage.QueueRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		name := chi.URLParam(r, "name")
-		err := queueRepository.DeleteQueue(name)
+		queueName := chi.URLParam(r, "queueName")
+		err := queueRepository.DeleteQueue(queueName)
 		if err != nil {
 			util.Respond(w, err, util.HttpStatusCodeFromAppError(err))
 			return

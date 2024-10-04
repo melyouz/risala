@@ -11,7 +11,7 @@ import (
 
 func HandleExchangeBindingDelete(exchangeRepository storage.ExchangeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		exchangeName := chi.URLParam(r, "name")
+		exchangeName := chi.URLParam(r, "exchangeName")
 		exchange, exchangeErr := exchangeRepository.GetExchange(exchangeName)
 		if exchangeErr != nil {
 			util.Respond(w, exchangeErr, util.HttpStatusCodeFromAppError(exchangeErr))

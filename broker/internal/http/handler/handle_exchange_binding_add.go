@@ -15,8 +15,8 @@ import (
 
 func HandleExchangeBindingAdd(exchangeRepository storage.ExchangeRepository, queueRepository storage.QueueRepository, validate *validator.Validate) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		name := chi.URLParam(r, "name")
-		exchange, exchangeErr := exchangeRepository.GetExchange(name)
+		exchangeName := chi.URLParam(r, "exchangeName")
+		exchange, exchangeErr := exchangeRepository.GetExchange(exchangeName)
 		if exchangeErr != nil {
 			util.Respond(w, exchangeErr, util.HttpStatusCodeFromAppError(exchangeErr))
 			return
