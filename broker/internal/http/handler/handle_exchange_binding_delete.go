@@ -5,12 +5,14 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+
 	"github.com/melyouz/risala/broker/internal/errs"
 	"github.com/melyouz/risala/broker/internal/http/util"
 	"github.com/melyouz/risala/broker/internal/storage"
-	"net/http"
 )
 
 func HandleExchangeBindingDelete(exchangeRepository storage.ExchangeRepository) http.HandlerFunc {

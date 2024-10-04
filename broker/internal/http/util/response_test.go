@@ -5,11 +5,13 @@
 package util
 
 import (
-	"github.com/melyouz/risala/broker/internal"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/melyouz/risala/broker/internal"
 )
 
 func TestRespond(t *testing.T) {

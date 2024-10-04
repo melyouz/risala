@@ -6,10 +6,12 @@ package util
 
 import (
 	"fmt"
-	"github.com/melyouz/risala/broker/internal/errs"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/melyouz/risala/broker/internal/errs"
 )
 
 func TestHandleQueueFind(t *testing.T) {

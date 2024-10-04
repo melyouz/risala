@@ -5,9 +5,10 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/melyouz/risala/broker/internal/http/util"
 	"github.com/melyouz/risala/broker/internal/storage"
-	"net/http"
 )
 
 func HandleQueueFind(queueRepository storage.QueueRepository) http.HandlerFunc {

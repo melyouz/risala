@@ -5,8 +5,9 @@
 package util
 
 import (
-	"github.com/melyouz/risala/broker/internal/errs"
 	"net/http"
+
+	"github.com/melyouz/risala/broker/internal/errs"
 )
 
 var httpDefaultStatusCode = http.StatusInternalServerError

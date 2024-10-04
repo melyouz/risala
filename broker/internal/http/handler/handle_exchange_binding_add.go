@@ -7,14 +7,16 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+
 	"github.com/melyouz/risala/broker/internal"
 	"github.com/melyouz/risala/broker/internal/errs"
 	"github.com/melyouz/risala/broker/internal/http/util"
 	"github.com/melyouz/risala/broker/internal/storage"
-	"net/http"
 )
 
 func HandleExchangeBindingAdd(exchangeRepository storage.ExchangeRepository, queueRepository storage.QueueRepository, validate *validator.Validate) http.HandlerFunc {

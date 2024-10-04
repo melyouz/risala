@@ -6,12 +6,14 @@ package main
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/go-chi/chi/v5"
 	_ "github.com/go-playground/validator/v10"
+
 	"github.com/melyouz/risala/broker/internal/http/server"
 	"github.com/melyouz/risala/broker/internal/sample"
 	"github.com/melyouz/risala/broker/internal/storage"
-	"log"
 )
 
 func main() {

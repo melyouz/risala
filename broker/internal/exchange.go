@@ -6,9 +6,11 @@ package internal
 
 import (
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/melyouz/risala/broker/internal/errs"
 	"slices"
+
+	"github.com/google/uuid"
+
+	"github.com/melyouz/risala/broker/internal/errs"
 )
 
 type Exchange struct {

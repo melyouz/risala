@@ -5,10 +5,12 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
+
 	"github.com/melyouz/risala/broker/internal/http/util"
 	"github.com/melyouz/risala/broker/internal/storage"
-	"net/http"
 )
 
 func HandleQueueGet(queueRepository storage.QueueRepository) http.HandlerFunc {

@@ -6,6 +6,7 @@ package errs
 
 import (
 	"fmt"
+
 	"github.com/go-playground/validator/v10"
 )
 
@@ -27,7 +28,7 @@ func validationMessageForTag(fe validator.FieldError) string {
 	switch fe.Tag() {
 	case "required":
 		return "This field is required"
-	//case "email":
+	// case "email":
 	//	return "Invalid email"
 	case "oneof":
 		return fmt.Sprintf("Invalid value '%s'. Must be one of: %s", fe.Value(), fe.Param())

@@ -6,6 +6,7 @@ package server
 
 import (
 	"github.com/go-chi/chi/v5"
+
 	"github.com/melyouz/risala/broker/internal/http/handler"
 )
 

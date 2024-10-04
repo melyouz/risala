@@ -6,10 +6,11 @@ package storage
 
 import (
 	"fmt"
-	"github.com/melyouz/risala/broker/internal"
-	"github.com/melyouz/risala/broker/internal/errs"
 	"sort"
 	"sync"
+
+	"github.com/melyouz/risala/broker/internal"
+	"github.com/melyouz/risala/broker/internal/errs"
 )
 
 type InMemoryExchangeRepository struct {

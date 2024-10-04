@@ -5,13 +5,15 @@
 package server
 
 import (
-	"github.com/go-chi/chi/v5"
-	"github.com/go-playground/validator/v10"
-	"github.com/melyouz/risala/broker/internal/storage"
 	"net/http"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
+
+	"github.com/melyouz/risala/broker/internal/storage"
 )
 
 type Server struct {

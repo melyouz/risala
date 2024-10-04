@@ -8,15 +8,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
-	"github.com/melyouz/risala/broker/internal"
-	"github.com/melyouz/risala/broker/internal/sample"
-	"github.com/melyouz/risala/broker/internal/storage"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/melyouz/risala/broker/internal"
+	"github.com/melyouz/risala/broker/internal/sample"
+	"github.com/melyouz/risala/broker/internal/storage"
 )
 
 var testEventsQueue = sample.Queues["events"]
