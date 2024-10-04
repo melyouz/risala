@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2024 Mohammadi El Youzghi and contributors.
+ */
+
 package errs
 
 const BindingExistsErrorCode = "BINDING_ALREADY_EXISTS"
