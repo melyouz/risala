@@ -15,7 +15,11 @@ import (
 	"net/http"
 )
 
-func HandleQueueMessagePublish(queueRepository storage.QueueRepository, validate *validator.Validate) http.HandlerFunc {
+func HandleExchangeMessagePublish(
+	exchangeRepository storage.ExchangeRepository,
+	queueRepository storage.QueueRepository,
+	validate *validator.Validate,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var message internal.Message
 		util.Decode(r, &message)
@@ -26,15 +30,18 @@ func HandleQueueMessagePublish(queueRepository storage.QueueRepository, validate
 			return
 		}
 
-		queueName := chi.URLParam(r, "queueName")
-		queue, err := queueRepository.GetQueue(queueName)
+		exchangeName := chi.URLParam(r, "exchangeName")
+		exchange, err := exchangeRepository.GetExchange(exchangeName)
 		if err != nil {
 			util.Respond(w, err, util.HttpStatusCodeFromAppError(err))
 			return
 		}
 
-		queue.PublishMessage(message)
-		queueRepository.StoreQueue(queue)
+		for _, binding := range exchange.Bindings {
+			queue, _ := queueRepository.GetQueue(binding.Queue)
+			queue.PublishMessage(message)
+			queueRepository.StoreQueue(queue)
+		}
 
 		util.Respond(w, nil, http.StatusOK)
 	}

@@ -4,7 +4,9 @@
 
 package sample
 
-import "github.com/melyouz/risala/broker/internal"
+import (
+	"github.com/melyouz/risala/broker/internal"
+)
 
 var Exchanges = map[string]internal.Exchange{
 	"app.internal": {Name: "app.internal", Bindings: []internal.Binding{}},

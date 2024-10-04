@@ -241,7 +241,7 @@ func TestHandleQueueDelete(t *testing.T) {
 }
 
 func TestHandleQueueMessagePublish(t *testing.T) {
-	t.Run("Publishes messages when validations pass", func(t *testing.T) {
+	t.Run("Publishes message when validations pass", func(t *testing.T) {
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": "Hello world!",
 		})
@@ -251,20 +251,20 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 				testTmpQueue.Name:    testTmpQueue,
 			},
 		})
-		path := fmt.Sprintf("%s/queues/%s/messages", ApiV1BasePath, testTmpQueue.Name)
+		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, testTmpQueue.Name)
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
 
-		assert.Equal(t, http.StatusCreated, response.Code)
-		assert.JSONEq(t, "{\"payload\":\"Hello world!\"}", response.Body.String())
+		assert.Equal(t, http.StatusOK, response.Code)
+		assert.Empty(t, response.Body)
 	})
 
 	t.Run("Returns validation error when no message payload supplied", func(t *testing.T) {
 		messageBody, _ := json.Marshal(map[string]interface{}{})
 		server := createTestServer(ServerSampleData{})
-		path := fmt.Sprintf("%s/queues/%s/messages", ApiV1BasePath, testTmpQueue.Name)
+		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, testTmpQueue.Name)
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -280,7 +280,7 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 		})
 
 		server := createTestServer(ServerSampleData{})
-		path := fmt.Sprintf("%s/queues/%s/messages", ApiV1BasePath, testTmpQueue.Name)
+		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, testTmpQueue.Name)
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -296,7 +296,7 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 		})
 
 		server := createTestServer(ServerSampleData{})
-		path := fmt.Sprintf("%s/queues/%s/messages", ApiV1BasePath, testTmpQueue.Name)
+		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, testTmpQueue.Name)
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -315,7 +315,7 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 				testEventsQueue.Name: testEventsQueue,
 			},
 		})
-		path := fmt.Sprintf("%s/queues/%s/messages", ApiV1BasePath, testTmpQueue.Name)
+		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, testTmpQueue.Name)
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -734,4 +734,107 @@ func TestHandleExchangeBindingDelete(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, response.Code)
 		assert.JSONEq(t, "{\"code\":\"PARAM_INVALID\",\"message\":\"invalid UUID length: 3\"}", response.Body.String())
 	})
+}
+
+func TestHandleExchangeMessagePublish(t *testing.T) {
+	t.Run("Publishes message when validations pass & queue binding exists", func(t *testing.T) {
+		server := createTestServer(ServerSampleData{
+			exchanges: map[string]internal.Exchange{
+				testInternalExchange.Name: testInternalExchange,
+				testExternalExchange.Name: testExternalExchange,
+			},
+			queues: map[string]internal.Queue{
+				testEventsQueue.Name: testEventsQueue,
+				testTmpQueue.Name:    testTmpQueue,
+			},
+		})
+		bindingBody, _ := json.Marshal(map[string]interface{}{
+			"queue":      testTmpQueue.Name,
+			"routingKey": "#",
+		})
+		path := fmt.Sprintf("%s/exchanges/%s/bindings", ApiV1BasePath, testInternalExchange.Name)
+		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(bindingBody))
+		response := httptest.NewRecorder()
+		server.ServeHTTP(response, request)
+
+		messageBody, _ := json.Marshal(map[string]interface{}{
+			"payload": "Hello world!",
+		})
+		path = fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, testInternalExchange.Name)
+		request = httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
+		response = httptest.NewRecorder()
+		server.ServeHTTP(response, request)
+		assert.Equal(t, http.StatusOK, response.Code)
+		assert.Empty(t, response.Body)
+	})
+
+	t.Run("Returns validation error when no message payload supplied", func(t *testing.T) {
+		messageBody, _ := json.Marshal(map[string]interface{}{})
+		server := createTestServer(ServerSampleData{})
+		path := fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, testTmpQueue.Name)
+		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+		assert.JSONEq(t, "{\"code\":\"VALIDATION_ERROR\",\"errors\":[{\"field\":\"payload\",\"message\":\"This field is required\"}]}", response.Body.String())
+	})
+
+	t.Run("Returns validation error when message payload is empty", func(t *testing.T) {
+		messageBody, _ := json.Marshal(map[string]interface{}{
+			"payload": "",
+		})
+
+		server := createTestServer(ServerSampleData{})
+		path := fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, testTmpQueue.Name)
+		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+		assert.JSONEq(t, "{\"code\":\"VALIDATION_ERROR\",\"errors\":[{\"field\":\"payload\",\"message\":\"This field is required\"}]}", response.Body.String())
+	})
+
+	t.Run("Returns validation error when message payload is nil", func(t *testing.T) {
+		messageBody, _ := json.Marshal(map[string]interface{}{
+			"payload": nil,
+		})
+
+		server := createTestServer(ServerSampleData{})
+		path := fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, testTmpQueue.Name)
+		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assert.Equal(t, http.StatusBadRequest, response.Code)
+		assert.JSONEq(t, "{\"code\":\"VALIDATION_ERROR\",\"errors\":[{\"field\":\"payload\",\"message\":\"This field is required\"}]}", response.Body.String())
+	})
+
+	t.Run("Returns not found when exchange does not exist", func(t *testing.T) {
+		messageBody, _ := json.Marshal(map[string]interface{}{
+			"payload": "Hello world!",
+		})
+		server := createTestServer(ServerSampleData{
+			exchanges: map[string]internal.Exchange{
+				testInternalExchange.Name: testInternalExchange,
+			},
+			queues: map[string]internal.Queue{
+				testEventsQueue.Name: testEventsQueue,
+				testTmpQueue.Name:    testTmpQueue,
+			},
+		})
+		path := fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, testExternalExchange.Name)
+		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assert.Equal(t, http.StatusNotFound, response.Code)
+		assert.JSONEq(t, "{\"code\":\"EXCHANGE_NOT_FOUND\",\"message\":\"Exchange 'app.external' not found\"}", response.Body.String())
+	})
+
+	// TODO: Check message is routed to queue
 }

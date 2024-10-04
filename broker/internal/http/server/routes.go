@@ -18,7 +18,7 @@ func (s *Server) RegisterRoutes() {
 	queuesRouter.Get("/{queueName}", handler.HandleQueueGet(s.queueRepository))
 	queuesRouter.Post("/", handler.HandleQueueCreate(s.queueRepository, s.validate))
 	queuesRouter.Delete("/{queueName}", handler.HandleQueueDelete(s.queueRepository))
-	queuesRouter.Post("/{queueName}/messages", handler.HandleQueueMessagePublish(s.queueRepository, s.validate))
+	queuesRouter.Post("/{queueName}/publish", handler.HandleQueueMessagePublish(s.queueRepository, s.validate))
 
 	// exchanges
 	exchangesRouter := chi.NewRouter()
@@ -28,6 +28,7 @@ func (s *Server) RegisterRoutes() {
 	exchangesRouter.Delete("/{exchangeName}", handler.HandleExchangeDelete(s.exchangeRepository))
 	exchangesRouter.Post("/{exchangeName}/bindings", handler.HandleExchangeBindingAdd(s.exchangeRepository, s.queueRepository, s.validate))
 	exchangesRouter.Delete("/{exchangeName}/bindings/{bindingId}", handler.HandleExchangeBindingDelete(s.exchangeRepository))
+	exchangesRouter.Post("/{exchangeName}/publish", handler.HandleExchangeMessagePublish(s.exchangeRepository, s.queueRepository, s.validate))
 
 	// main router
 	s.router.Route(ApiV1BasePath, func(r chi.Router) {
