@@ -6,7 +6,6 @@ package handler
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -21,13 +20,6 @@ import (
 
 func HandleExchangeBindingAdd(exchangeRepository storage.ExchangeRepository, queueRepository storage.QueueRepository, validate *validator.Validate) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		exchangeName := chi.URLParam(r, "exchangeName")
-		exchange, exchangeErr := exchangeRepository.GetExchange(exchangeName)
-		if exchangeErr != nil {
-			util.Respond(w, exchangeErr, util.HttpStatusCodeFromAppError(exchangeErr))
-			return
-		}
-
 		var binding internal.Binding
 		binding.Id = uuid.New()
 		util.Decode(r, &binding)
@@ -44,25 +36,13 @@ func HandleExchangeBindingAdd(exchangeRepository storage.ExchangeRepository, que
 			return
 		}
 
-		bindingErr := validateBindingDoesNotExist(exchange, binding)
+		exchangeName := chi.URLParam(r, "exchangeName")
+		bindingErr := exchangeRepository.AddBinding(exchangeName, binding)
 		if bindingErr != nil {
 			util.Respond(w, bindingErr, util.HttpStatusCodeFromAppError(bindingErr))
 			return
 		}
 
-		exchange.AddBinding(binding)
-		exchangeRepository.StoreExchange(exchange)
-
 		util.Respond(w, binding, http.StatusCreated)
 	}
-}
-
-func validateBindingDoesNotExist(exchange *internal.Exchange, binding internal.Binding) errs.AppError {
-	for _, v := range exchange.Bindings {
-		if v.Queue == binding.Queue {
-			return errs.NewBindingExistsError(fmt.Sprintf("Binding to Queue '%s' already exists", binding.Queue))
-		}
-	}
-
-	return nil
 }

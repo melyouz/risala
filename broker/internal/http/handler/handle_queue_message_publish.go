@@ -29,14 +29,11 @@ func HandleQueueMessagePublish(queueRepository storage.QueueRepository, validate
 		}
 
 		queueName := chi.URLParam(r, "queueName")
-		queue, err := queueRepository.GetQueue(queueName)
-		if err != nil {
-			util.Respond(w, err, util.HttpStatusCodeFromAppError(err))
+		publishErr := queueRepository.PublishMessage(queueName, message)
+		if publishErr != nil {
+			util.Respond(w, publishErr, util.HttpStatusCodeFromAppError(publishErr))
 			return
 		}
-
-		queue.PublishMessage(message)
-		queueRepository.StoreQueue(queue)
 
 		util.Respond(w, nil, http.StatusOK)
 	}

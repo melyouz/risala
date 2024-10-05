@@ -680,9 +680,7 @@ func TestHandleExchangeBindingAdd(t *testing.T) {
 				testTmpQueue.Name:    testTmpQueue,
 			},
 		})
-		exchange, _ := server.exchangeRepository.GetExchange(testInternalExchange.Name)
-		exchange.AddBinding(internal.Binding{Queue: testEventsQueue.Name})
-		server.exchangeRepository.StoreExchange(exchange)
+		_ = server.exchangeRepository.AddBinding(testInternalExchange.Name, internal.Binding{Id: uuid.New(), Queue: testEventsQueue.Name})
 
 		bindingBody, _ := json.Marshal(map[string]interface{}{
 			"queue":      testEventsQueue.Name,
@@ -733,10 +731,8 @@ func TestHandleExchangeBindingDelete(t *testing.T) {
 				testTmpQueue.Name:    testTmpQueue,
 			},
 		})
-		exchange, _ := server.exchangeRepository.GetExchange(testInternalExchange.Name)
 		binding := internal.Binding{Id: uuid.New(), Queue: testEventsQueue.Name}
-		exchange.AddBinding(binding)
-		server.exchangeRepository.StoreExchange(exchange)
+		_ = server.exchangeRepository.AddBinding(testInternalExchange.Name, binding)
 
 		path := fmt.Sprintf("%s/exchanges/%s/bindings/%s", ApiV1BasePath, testInternalExchange.Name, binding.Id)
 		request := httptest.NewRequest(http.MethodDelete, path, nil)

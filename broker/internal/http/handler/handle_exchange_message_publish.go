@@ -33,16 +33,18 @@ func HandleExchangeMessagePublish(
 		}
 
 		exchangeName := chi.URLParam(r, "exchangeName")
-		exchange, err := exchangeRepository.GetExchange(exchangeName)
-		if err != nil {
-			util.Respond(w, err, util.HttpStatusCodeFromAppError(err))
+		exchange, exchangeErr := exchangeRepository.GetExchange(exchangeName)
+		if exchangeErr != nil {
+			util.Respond(w, exchangeErr, util.HttpStatusCodeFromAppError(exchangeErr))
 			return
 		}
 
 		for _, binding := range exchange.Bindings {
-			queue, _ := queueRepository.GetQueue(binding.Queue)
-			queue.PublishMessage(message)
-			queueRepository.StoreQueue(queue)
+			publishErr := queueRepository.PublishMessage(binding.Queue, message)
+			if publishErr != nil {
+				util.Respond(w, publishErr, util.HttpStatusCodeFromAppError(publishErr))
+				return
+			}
 		}
 
 		util.Respond(w, nil, http.StatusOK)

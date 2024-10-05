@@ -22,9 +22,9 @@ var httpStatusCodes = map[string]int{
 
 func HttpStatusCodeFromAppError(err errs.AppError) int {
 	statusCode, ok := httpStatusCodes[err.GetCode()]
-	if ok {
-		return statusCode
+	if !ok {
+		return httpDefaultStatusCode
 	}
 
-	return httpDefaultStatusCode
+	return statusCode
 }
