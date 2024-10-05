@@ -20,6 +20,7 @@ func (s *Server) RegisterRoutes() {
 	queuesRouter.Post("/", handler.HandleQueueCreate(s.queueRepository, s.validate))
 	queuesRouter.Delete("/{queueName}", handler.HandleQueueDelete(s.queueRepository))
 	queuesRouter.Post("/{queueName}/publish", handler.HandleQueueMessagePublish(s.queueRepository, s.validate))
+	queuesRouter.Get("/{queueName}/messages", handler.HandleQueueMessageGet(s.queueRepository))
 
 	// exchanges
 	exchangesRouter := chi.NewRouter()

@@ -14,6 +14,7 @@ type AppError interface {
 
 type Error struct {
 	Code    string            `json:"code,omitempty"`
+	Param   string            `json:"param,omitempty"`
 	Message string            `json:"message,omitempty"`
 	Errors  []ValidationError `json:"errors,omitempty"`
 }

@@ -27,7 +27,7 @@ func HandleExchangeBindingDelete(exchangeRepository storage.ExchangeRepository) 
 		bindingIdParam := "bindingId"
 		bindingId, uuidErr := uuid.Parse(chi.URLParam(r, bindingIdParam))
 		if uuidErr != nil {
-			paramErr := errs.NewParamInvalidError(uuidErr.Error())
+			paramErr := errs.NewParamInvalidError(bindingIdParam, uuidErr.Error())
 			util.Respond(w, paramErr, util.HttpStatusCodeFromAppError(paramErr))
 			return
 		}

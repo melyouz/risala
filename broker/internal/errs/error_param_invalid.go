@@ -4,11 +4,12 @@
 
 package errs
 
-const ParamInvalidErrorCode = "PARAM_INVALID"
+const ParamInvalidErrorCode = "INVALID_PARAM"
 
-func NewParamInvalidError(msg string) *Error {
+func NewParamInvalidError(param string, msg string) *Error {
 	return &Error{
 		Code:    ParamInvalidErrorCode,
+		Param:   param,
 		Message: msg,
 	}
 }

@@ -328,6 +328,85 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 	})
 }
 
+func TestHandleQueueMessageGet(t *testing.T) {
+	t.Run("Returns empty list when no messages", func(t *testing.T) {
+		server := createTestServer(ServerSampleData{
+			queues: map[string]internal.Queue{
+				testEventsQueue.Name: testEventsQueue,
+				testTmpQueue.Name:    testTmpQueue,
+			},
+		})
+		path := fmt.Sprintf("%s/queues/%s/messages?count=1", ApiV1BasePath, testTmpQueue.Name)
+		request := httptest.NewRequest(http.MethodGet, path, nil)
+		response := httptest.NewRecorder()
+		server.ServeHTTP(response, request)
+
+		assert.Equal(t, http.StatusOK, response.Code)
+		assert.JSONEq(t, "[]", response.Body.String())
+	})
+
+	t.Run("Returns messages when exist", func(t *testing.T) {
+		server := createTestServer(ServerSampleData{
+			queues: map[string]internal.Queue{
+				testEventsQueue.Name: testEventsQueue,
+				testTmpQueue.Name:    testTmpQueue,
+			},
+		})
+
+		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, testTmpQueue.Name)
+		for i := 1; i <= 3; i++ {
+			messageBody, _ := json.Marshal(map[string]interface{}{
+				"payload": fmt.Sprintf("Message %d", i),
+			})
+			request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
+			response := httptest.NewRecorder()
+			server.ServeHTTP(response, request)
+			assert.Equal(t, http.StatusOK, response.Code)
+			assert.Empty(t, response.Body)
+		}
+
+		path = fmt.Sprintf("%s/queues/%s/messages", ApiV1BasePath, testTmpQueue.Name)
+		request := httptest.NewRequest(http.MethodGet, path, nil)
+		response := httptest.NewRecorder()
+		server.ServeHTTP(response, request)
+		assert.Equal(t, http.StatusOK, response.Code)
+		assert.JSONEq(t, "[{\"payload\":\"Message 3\"}]", response.Body.String())
+
+		path = fmt.Sprintf("%s/queues/%s/messages?count=2", ApiV1BasePath, testTmpQueue.Name)
+		request = httptest.NewRequest(http.MethodGet, path, nil)
+		response = httptest.NewRecorder()
+		server.ServeHTTP(response, request)
+		assert.Equal(t, http.StatusOK, response.Code)
+		assert.JSONEq(t, "[{\"payload\":\"Message 3\"},{\"payload\":\"Message 2\"}]", response.Body.String())
+
+		path = fmt.Sprintf("%s/queues/%s/messages?count=200", ApiV1BasePath, testTmpQueue.Name)
+		request = httptest.NewRequest(http.MethodGet, path, nil)
+		response = httptest.NewRecorder()
+		server.ServeHTTP(response, request)
+		assert.Equal(t, http.StatusOK, response.Code)
+		assert.JSONEq(t, "[{\"payload\":\"Message 3\"},{\"payload\":\"Message 2\"},{\"payload\":\"Message 1\"}]", response.Body.String())
+	})
+
+	t.Run("Returns not found when queue does not exist", func(t *testing.T) {
+		messageBody, _ := json.Marshal(map[string]interface{}{
+			"payload": "Hello world!",
+		})
+		server := createTestServer(ServerSampleData{
+			queues: map[string]internal.Queue{
+				testEventsQueue.Name: testEventsQueue,
+			},
+		})
+		path := fmt.Sprintf("%s/queues/%s/messages", ApiV1BasePath, testTmpQueue.Name)
+		request := httptest.NewRequest(http.MethodGet, path, bytes.NewReader(messageBody))
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assert.Equal(t, http.StatusNotFound, response.Code)
+		assert.JSONEq(t, "{\"code\":\"QUEUE_NOT_FOUND\",\"message\":\"Queue 'tmp' not found\"}", response.Body.String())
+	})
+}
+
 func TestHandleExchangesFind(t *testing.T) {
 	t.Run("Returns list when exchanges exist", func(t *testing.T) {
 		server := createTestServer(ServerSampleData{
@@ -734,7 +813,7 @@ func TestHandleExchangeBindingDelete(t *testing.T) {
 		server.ServeHTTP(response, request)
 
 		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(t, "{\"code\":\"PARAM_INVALID\",\"message\":\"invalid UUID length: 3\"}", response.Body.String())
+		assert.JSONEq(t, "{\"code\":\"INVALID_PARAM\",\"param\":\"bindingId\",\"message\":\"invalid UUID length: 3\"}", response.Body.String())
 	})
 }
 
