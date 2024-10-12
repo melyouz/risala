@@ -13,16 +13,16 @@ import (
 )
 
 func TestRespond(t *testing.T) {
-	type TestSubEntity struct {
-		Content string `json:"content" validate:"required"`
-	}
-
-	type TestEntity struct {
-		Name     string          `json:"name" validate:"required"`
-		Children []TestSubEntity `json:"children" validate:"dive"`
-	}
-
 	t.Run("Responds to HTTP request", func(t *testing.T) {
+		type TestSubEntity struct {
+			Content string `json:"content" validate:"required"`
+		}
+
+		type TestEntity struct {
+			Name     string          `json:"name" validate:"required"`
+			Children []TestSubEntity `json:"children" validate:"dive"`
+		}
+
 		entity := TestEntity{
 			Name: "testEntityName",
 			Children: []TestSubEntity{

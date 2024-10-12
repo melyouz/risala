@@ -14,16 +14,17 @@ import (
 	"github.com/melyouz/risala/broker/internal/errs"
 )
 
-const testErrorCode = "TEST_ERROR_CODE"
-
 func TestHttpStatusCodeFromAppError(t *testing.T) {
 	t.Run("Returns mapped status code", func(t *testing.T) {
+		const testErrorCode = "TEST_ERROR_CODE"
+		httpStatusCodes[testErrorCode] = http.StatusGone
+
 		msg := "Whatever error message..."
 		err := errs.Error{Code: testErrorCode, Message: msg}
-		httpStatusCodes[testErrorCode] = http.StatusGone
 		statusCode := HttpStatusCodeFromAppError(&err)
-		assert.Equal(t, http.StatusGone, statusCode)
+		assert.Equal(t, testErrorCode, err.GetCode())
 		assert.Equal(t, msg, err.GetMessage())
+		assert.Equal(t, http.StatusGone, statusCode)
 		assert.Equal(t, fmt.Sprintf("%s: %s", err.GetCode(), err.GetMessage()), err.Error())
 	})
 	t.Run("Returns default status code", func(t *testing.T) {

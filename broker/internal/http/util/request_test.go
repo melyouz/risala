@@ -15,16 +15,16 @@ import (
 )
 
 func TestDecode(t *testing.T) {
-	type TestSubEntity struct {
-		Content string `json:"content" validate:"required"`
-	}
-
-	type TestEntity struct {
-		Name     string          `json:"name" validate:"required"`
-		Children []TestSubEntity `json:"children" validate:"dive"`
-	}
-
 	t.Run("Decodes JSON body from HTTP request", func(t *testing.T) {
+		type TestSubEntity struct {
+			Content string `json:"content" validate:"required"`
+		}
+
+		type TestEntity struct {
+			Name     string          `json:"name" validate:"required"`
+			Children []TestSubEntity `json:"children" validate:"dive"`
+		}
+
 		requestBody, _ := json.Marshal(map[string]interface{}{
 			"name": "testEntityName",
 			"children": []TestSubEntity{
