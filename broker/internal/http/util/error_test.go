@@ -14,12 +14,15 @@ import (
 	"github.com/melyouz/risala/broker/internal/errs"
 )
 
-func TestHandleQueueFind(t *testing.T) {
+const testErrorCode = "TEST_ERROR_CODE"
+
+func TestHttpStatusCodeFromAppError(t *testing.T) {
 	t.Run("Returns mapped status code", func(t *testing.T) {
 		msg := "Whatever error message..."
-		err := errs.Error{Code: errs.QueueNotFoundErrorCode, Message: msg}
+		err := errs.Error{Code: testErrorCode, Message: msg}
+		httpStatusCodes[testErrorCode] = http.StatusGone
 		statusCode := HttpStatusCodeFromAppError(&err)
-		assert.Equal(t, http.StatusNotFound, statusCode)
+		assert.Equal(t, http.StatusGone, statusCode)
 		assert.Equal(t, msg, err.GetMessage())
 		assert.Equal(t, fmt.Sprintf("%s: %s", err.GetCode(), err.GetMessage()), err.Error())
 	})
