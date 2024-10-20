@@ -4,6 +4,11 @@
 
 package internal
 
+import (
+	"github.com/google/uuid"
+)
+
 type Message struct {
-	Payload string `json:"payload" validate:"required"`
+	Id      uuid.UUID `json:"id" validate:"required"`
+	Payload string    `json:"payload" validate:"required"`
 }

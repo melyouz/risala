@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 
 	"github.com/melyouz/risala/broker/internal"
 	"github.com/melyouz/risala/broker/internal/errs"
@@ -20,6 +21,7 @@ import (
 func HandleQueueMessagePublish(queueRepository storage.QueueRepository, validate *validator.Validate) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var message internal.Message
+		message.Id = uuid.New()
 		util.Decode(r, &message)
 
 		var vErrors validator.ValidationErrors
