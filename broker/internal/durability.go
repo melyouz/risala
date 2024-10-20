@@ -13,3 +13,7 @@ var Durability = struct {
 	DURABLE:   "durable",
 	TRANSIENT: "transient",
 }
+
+func (d *DurabilityType) String() string {
+	return string(*d)
+}

@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/melyouz/risala/broker/internal"
+	"github.com/melyouz/risala/broker/internal/errs"
 	"github.com/melyouz/risala/broker/internal/sample"
 	"github.com/melyouz/risala/broker/internal/storage"
 )
@@ -66,11 +67,15 @@ func TestHandleQueuesFind(t *testing.T) {
 		})
 		request := httptest.NewRequest(http.MethodGet, ApiV1BasePath+"/queues", nil)
 		response := httptest.NewRecorder()
-
 		server.ServeHTTP(response, request)
 
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.JSONEq(t, "[{\"name\":\"events\",\"durability\":\"durable\"},{\"name\":\"tmp\",\"durability\":\"transient\"}]", response.Body.String())
+		assertOk(t, response)
+		jsonResponse := JSONCollectionResponse(response)
+		assert.Len(t, jsonResponse, 2)
+		assert.Equal(t, testEventsQueue.Name, jsonResponse[0]["name"])
+		assert.Equal(t, testEventsQueue.Durability.String(), jsonResponse[0]["durability"])
+		assert.Equal(t, testTmpQueue.Name, jsonResponse[1]["name"])
+		assert.Equal(t, testTmpQueue.Durability.String(), jsonResponse[1]["durability"])
 	})
 
 	t.Run("Returns empty list when no queues", func(t *testing.T) {
@@ -79,8 +84,9 @@ func TestHandleQueuesFind(t *testing.T) {
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, request)
 
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.JSONEq(t, "[]", response.Body.String())
+		assertOk(t, response)
+		jsonResponse := JSONCollectionResponse(response)
+		assert.Len(t, jsonResponse, 0)
 	})
 }
 
@@ -98,8 +104,10 @@ func TestHandleQueueGet(t *testing.T) {
 
 		server.ServeHTTP(response, request)
 
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.JSONEq(t, "{\"name\":\"events\",\"durability\":\"durable\"}", response.Body.String())
+		assertOk(t, response)
+		jsonResponse := JSONItemResponse(response)
+		assert.Equal(t, testEventsQueue.Name, jsonResponse["name"])
+		assert.Equal(t, testEventsQueue.Durability.String(), jsonResponse["durability"])
 	})
 
 	t.Run("Returns not found when queue does not exist", func(t *testing.T) {
@@ -113,9 +121,7 @@ func TestHandleQueueGet(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusNotFound, response.Code)
-		assert.JSONEq(t, "{\"code\":\"QUEUE_NOT_FOUND\",\"message\":\"Queue 'nonExistingQueueName' not found\"}", response.Body.String())
+		assertNotFound(t, response, "QUEUE_NOT_FOUND", "Queue 'nonExistingQueueName' not found")
 	})
 }
 
@@ -130,9 +136,10 @@ func TestHandleQueueCreate(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusCreated, response.Code)
-		assert.JSONEq(t, "{\"name\":\"testDurableQueueName\",\"durability\":\"durable\"}", response.Body.String())
+		assertCreated(t, response)
+		jsonResponse := JSONItemResponse(response)
+		assert.Equal(t, "testDurableQueueName", jsonResponse["name"])
+		assert.Equal(t, internal.Durability.DURABLE.String(), jsonResponse["durability"])
 	})
 
 	t.Run("Creates transient queue when validations pass", func(t *testing.T) {
@@ -145,9 +152,10 @@ func TestHandleQueueCreate(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusCreated, response.Code)
-		assert.JSONEq(t, "{\"name\":\"testTransientQueueName\",\"durability\":\"transient\"}", response.Body.String())
+		assertCreated(t, response)
+		jsonResponse := JSONItemResponse(response)
+		assert.Equal(t, "testTransientQueueName", jsonResponse["name"])
+		assert.Equal(t, internal.Durability.TRANSIENT.String(), jsonResponse["durability"])
 	})
 
 	t.Run("Returns validation error when unknown queue durability", func(t *testing.T) {
@@ -160,9 +168,9 @@ func TestHandleQueueCreate(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(t, "{\"code\":\"VALIDATION_ERROR\",\"errors\":[{\"field\":\"durability\",\"message\":\"Invalid value 'whatever'. Must be one of: durable transient\"}]}", response.Body.String())
+		assertValidationErrors(t, response, []errs.ValidationError{
+			{"durability", "Invalid value 'whatever'. Must be one of: durable transient"},
+		})
 	})
 
 	t.Run("Returns validation error when no queue name supplied", func(t *testing.T) {
@@ -174,9 +182,9 @@ func TestHandleQueueCreate(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(t, "{\"code\":\"VALIDATION_ERROR\",\"errors\":[{\"field\":\"name\",\"message\":\"This field is required\"}]}", response.Body.String())
+		assertValidationErrors(t, response, []errs.ValidationError{
+			{"name", "This field is required"},
+		})
 	})
 
 	t.Run("Returns validation error when no queue durability supplied", func(t *testing.T) {
@@ -188,9 +196,9 @@ func TestHandleQueueCreate(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(t, "{\"code\":\"VALIDATION_ERROR\",\"errors\":[{\"field\":\"durability\",\"message\":\"This field is required\"}]}", response.Body.String())
+		assertValidationErrors(t, response, []errs.ValidationError{
+			{"durability", "This field is required"},
+		})
 	})
 
 	t.Run("Returns validation errors when no queue name nor durability supplied", func(t *testing.T) {
@@ -202,9 +210,10 @@ func TestHandleQueueCreate(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(t, "{\"code\":\"VALIDATION_ERROR\",\"errors\":[{\"field\":\"name\",\"message\":\"This field is required\"},{\"field\":\"durability\",\"message\":\"This field is required\"}]}", response.Body.String())
+		assertValidationErrors(t, response, []errs.ValidationError{
+			{"name", "This field is required"},
+			{"durability", "This field is required"},
+		})
 	})
 }
 
@@ -221,8 +230,7 @@ func TestHandleQueueDelete(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusAccepted, response.Code)
+		assertAccepted(t, response)
 	})
 
 	t.Run("Returns not found when queue does not exist", func(t *testing.T) {
@@ -236,9 +244,7 @@ func TestHandleQueueDelete(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusNotFound, response.Code)
-		assert.JSONEq(t, "{\"code\":\"QUEUE_NOT_FOUND\",\"message\":\"Queue 'nonExistingQueueName' not found\"}", response.Body.String())
+		assertNotFound(t, response, "QUEUE_NOT_FOUND", "Queue 'nonExistingQueueName' not found")
 	})
 }
 
@@ -259,7 +265,7 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 
 		server.ServeHTTP(response, request)
 
-		assert.Equal(t, http.StatusOK, response.Code)
+		assertOk(t, response)
 		assert.Empty(t, response.Body)
 	})
 
@@ -271,9 +277,9 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(t, "{\"code\":\"VALIDATION_ERROR\",\"errors\":[{\"field\":\"payload\",\"message\":\"This field is required\"}]}", response.Body.String())
+		assertValidationErrors(t, response, []errs.ValidationError{
+			{"payload", "This field is required"},
+		})
 	})
 
 	t.Run("Returns validation error when message payload is empty", func(t *testing.T) {
@@ -287,9 +293,9 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(t, "{\"code\":\"VALIDATION_ERROR\",\"errors\":[{\"field\":\"payload\",\"message\":\"This field is required\"}]}", response.Body.String())
+		assertValidationErrors(t, response, []errs.ValidationError{
+			{"payload", "This field is required"},
+		})
 	})
 
 	t.Run("Returns validation error when message payload is nil", func(t *testing.T) {
@@ -303,9 +309,9 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(t, "{\"code\":\"VALIDATION_ERROR\",\"errors\":[{\"field\":\"payload\",\"message\":\"This field is required\"}]}", response.Body.String())
+		assertValidationErrors(t, response, []errs.ValidationError{
+			{"payload", "This field is required"},
+		})
 	})
 
 	t.Run("Returns not found when queue does not exist", func(t *testing.T) {
@@ -322,9 +328,7 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusNotFound, response.Code)
-		assert.JSONEq(t, "{\"code\":\"QUEUE_NOT_FOUND\",\"message\":\"Queue 'tmp' not found\"}", response.Body.String())
+		assertNotFound(t, response, "QUEUE_NOT_FOUND", "Queue 'tmp' not found")
 	})
 }
 
@@ -341,8 +345,9 @@ func TestHandleQueueMessageGet(t *testing.T) {
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, request)
 
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.JSONEq(t, "[]", response.Body.String())
+		assertOk(t, response)
+		jsonResponse := JSONCollectionResponse(response)
+		assert.Len(t, jsonResponse, 0)
 	})
 
 	t.Run("Returns messages when exist", func(t *testing.T) {
@@ -361,7 +366,7 @@ func TestHandleQueueMessageGet(t *testing.T) {
 			request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 			response := httptest.NewRecorder()
 			server.ServeHTTP(response, request)
-			assert.Equal(t, http.StatusOK, response.Code)
+			assertOk(t, response)
 			assert.Empty(t, response.Body)
 		}
 
@@ -369,22 +374,40 @@ func TestHandleQueueMessageGet(t *testing.T) {
 		request := httptest.NewRequest(http.MethodGet, path, nil)
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, request)
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.JSONEq(t, "[{\"payload\":\"Message 3\"}]", response.Body.String())
+		assertOk(t, response)
+		var jsonResponse1 []map[string]interface{}
+		_ = json.Unmarshal([]byte(response.Body.String()), &jsonResponse1)
+		assert.Len(t, jsonResponse1, 1)
+		assert.NotEmpty(t, jsonResponse1[0]["id"])
+		assert.Equal(t, "Message 3", jsonResponse1[0]["payload"])
 
 		path = fmt.Sprintf("%s/queues/%s/messages?count=2", ApiV1BasePath, testTmpQueue.Name)
 		request = httptest.NewRequest(http.MethodGet, path, nil)
 		response = httptest.NewRecorder()
 		server.ServeHTTP(response, request)
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.JSONEq(t, "[{\"payload\":\"Message 3\"},{\"payload\":\"Message 2\"}]", response.Body.String())
+		assertOk(t, response)
+		var jsonResponse2 []map[string]interface{}
+		_ = json.Unmarshal([]byte(response.Body.String()), &jsonResponse2)
+		assert.Len(t, jsonResponse2, 2)
+		assert.NotEmpty(t, jsonResponse2[0]["id"])
+		assert.Equal(t, "Message 3", jsonResponse2[0]["payload"])
+		assert.NotEmpty(t, jsonResponse2[0]["id"])
+		assert.Equal(t, "Message 2", jsonResponse2[1]["payload"])
 
 		path = fmt.Sprintf("%s/queues/%s/messages?count=200", ApiV1BasePath, testTmpQueue.Name)
 		request = httptest.NewRequest(http.MethodGet, path, nil)
 		response = httptest.NewRecorder()
 		server.ServeHTTP(response, request)
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.JSONEq(t, "[{\"payload\":\"Message 3\"},{\"payload\":\"Message 2\"},{\"payload\":\"Message 1\"}]", response.Body.String())
+		assertOk(t, response)
+		var jsonResponse3 []map[string]interface{}
+		_ = json.Unmarshal([]byte(response.Body.String()), &jsonResponse3)
+		assert.Len(t, jsonResponse3, 3)
+		assert.NotEmpty(t, jsonResponse3[0]["id"])
+		assert.Equal(t, "Message 3", jsonResponse3[0]["payload"])
+		assert.NotEmpty(t, jsonResponse3[0]["id"])
+		assert.Equal(t, "Message 2", jsonResponse3[1]["payload"])
+		assert.NotEmpty(t, jsonResponse3[0]["id"])
+		assert.Equal(t, "Message 1", jsonResponse3[2]["payload"])
 	})
 
 	t.Run("Returns not found when queue does not exist", func(t *testing.T) {
@@ -401,9 +424,7 @@ func TestHandleQueueMessageGet(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusNotFound, response.Code)
-		assert.JSONEq(t, "{\"code\":\"QUEUE_NOT_FOUND\",\"message\":\"Queue 'tmp' not found\"}", response.Body.String())
+		assertNotFound(t, response, "QUEUE_NOT_FOUND", "Queue 'tmp' not found")
 	})
 }
 
@@ -420,8 +441,13 @@ func TestHandleExchangesFind(t *testing.T) {
 
 		server.ServeHTTP(response, request)
 
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.JSONEq(t, "[{\"name\":\"app.external\",\"bindings\":[]},{\"name\":\"app.internal\",\"bindings\":[]}]", response.Body.String())
+		assertOk(t, response)
+		jsonResponse := JSONCollectionResponse(response)
+		assert.Len(t, jsonResponse, 2)
+		assert.Equal(t, testExternalExchange.Name, jsonResponse[0]["name"])
+		assert.Len(t, jsonResponse[0]["bindings"], 0)
+		assert.Equal(t, testInternalExchange.Name, jsonResponse[1]["name"])
+		assert.Len(t, jsonResponse[1]["bindings"], 0)
 	})
 
 	t.Run("Returns empty list when no exchanges", func(t *testing.T) {
@@ -430,8 +456,9 @@ func TestHandleExchangesFind(t *testing.T) {
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, request)
 
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.JSONEq(t, "[]", response.Body.String())
+		assertOk(t, response)
+		jsonResponse := JSONCollectionResponse(response)
+		assert.Len(t, jsonResponse, 0)
 	})
 }
 
@@ -449,8 +476,10 @@ func TestHandleExchangeGet(t *testing.T) {
 
 		server.ServeHTTP(response, request)
 
-		assert.Equal(t, http.StatusOK, response.Code)
-		assert.JSONEq(t, "{\"name\":\"app.external\",\"bindings\":[]}", response.Body.String())
+		assertOk(t, response)
+		jsonResponse := JSONItemResponse(response)
+		assert.Equal(t, testExternalExchange.Name, jsonResponse["name"])
+		assert.Len(t, jsonResponse["bindings"], 0)
 	})
 
 	t.Run("Returns not found when exchange does not exist", func(t *testing.T) {
@@ -464,9 +493,7 @@ func TestHandleExchangeGet(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusNotFound, response.Code)
-		assert.JSONEq(t, "{\"code\":\"EXCHANGE_NOT_FOUND\",\"message\":\"Exchange 'nonExistingExchangeName' not found\"}", response.Body.String())
+		assertNotFound(t, response, "EXCHANGE_NOT_FOUND", "Exchange 'nonExistingExchangeName' not found")
 	})
 }
 
@@ -485,9 +512,10 @@ func TestHandleExchangeCreate(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusCreated, response.Code)
-		assert.JSONEq(t, "{\"name\":\"app.tmp\",\"bindings\":[]}", response.Body.String())
+		assertCreated(t, response)
+		jsonResponse := JSONItemResponse(response)
+		assert.Equal(t, "app.tmp", jsonResponse["name"])
+		assert.Len(t, jsonResponse["bindings"], 0)
 	})
 
 	t.Run("Returns validation error when no exchange name supplied", func(t *testing.T) {
@@ -497,9 +525,9 @@ func TestHandleExchangeCreate(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(t, "{\"code\":\"VALIDATION_ERROR\",\"errors\":[{\"field\":\"name\",\"message\":\"This field is required\"}]}", response.Body.String())
+		assertValidationErrors(t, response, []errs.ValidationError{
+			{"name", "This field is required"},
+		})
 	})
 
 	t.Run("Returns validation error when exchange name is empty", func(t *testing.T) {
@@ -511,9 +539,9 @@ func TestHandleExchangeCreate(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(t, "{\"code\":\"VALIDATION_ERROR\",\"errors\":[{\"field\":\"name\",\"message\":\"This field is required\"}]}", response.Body.String())
+		assertValidationErrors(t, response, []errs.ValidationError{
+			{"name", "This field is required"},
+		})
 	})
 
 	t.Run("Returns validation error when exchange name is nil", func(t *testing.T) {
@@ -525,9 +553,9 @@ func TestHandleExchangeCreate(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(t, "{\"code\":\"VALIDATION_ERROR\",\"errors\":[{\"field\":\"name\",\"message\":\"This field is required\"}]}", response.Body.String())
+		assertValidationErrors(t, response, []errs.ValidationError{
+			{"name", "This field is required"},
+		})
 	})
 
 	t.Run("Returns conflict error when exchange already exists", func(t *testing.T) {
@@ -544,9 +572,7 @@ func TestHandleExchangeCreate(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusConflict, response.Code)
-		assert.JSONEq(t, "{\"code\":\"EXCHANGE_ALREADY_EXISTS\",\"message\":\"Exchange 'app.internal' already exists\"}", response.Body.String())
+		assertConflict(t, response, "EXCHANGE_ALREADY_EXISTS", "Exchange 'app.internal' already exists")
 	})
 }
 
@@ -563,8 +589,7 @@ func TestHandleExchangeDelete(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusAccepted, response.Code)
+		assertAccepted(t, response)
 	})
 
 	t.Run("Returns not found when exchange does not exist", func(t *testing.T) {
@@ -578,9 +603,7 @@ func TestHandleExchangeDelete(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusNotFound, response.Code)
-		assert.JSONEq(t, "{\"code\":\"EXCHANGE_NOT_FOUND\",\"message\":\"Exchange 'nonExistingExchangeName' not found\"}", response.Body.String())
+		assertNotFound(t, response, "EXCHANGE_NOT_FOUND", "Exchange 'nonExistingExchangeName' not found")
 	})
 }
 
@@ -605,18 +628,11 @@ func TestHandleExchangeBindingAdd(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusCreated, response.Code)
-
-		respJson := response.Body.String()
-		respBinding := &internal.Binding{}
-		_ = json.Unmarshal([]byte(respJson), respBinding)
-		assert.Equal(t, testEventsQueue.Name, respBinding.Queue)
-		assert.Equal(t, "#", respBinding.RoutingKey)
-		assert.NotEmpty(t, respBinding.Id)
-
-		expectedJson := fmt.Sprintf("{\"id\":\"%s\",\"queue\":\"events\",\"routingKey\":\"#\"}", respBinding.Id)
-		assert.JSONEq(t, expectedJson, respJson)
+		assertCreated(t, response)
+		jsonResponse := JSONItemResponse(response)
+		assert.NotEmpty(t, jsonResponse["id"])
+		assert.Equal(t, testEventsQueue.Name, jsonResponse["queue"])
+		assert.Equal(t, "#", jsonResponse["routingKey"])
 	})
 
 	t.Run("Returns not found error when exchange does not exist", func(t *testing.T) {
@@ -639,9 +655,7 @@ func TestHandleExchangeBindingAdd(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusNotFound, response.Code)
-		assert.JSONEq(t, "{\"code\":\"EXCHANGE_NOT_FOUND\",\"message\":\"Exchange 'nonExistingExchangeName' not found\"}", response.Body.String())
+		assertNotFound(t, response, "EXCHANGE_NOT_FOUND", "Exchange 'nonExistingExchangeName' not found")
 	})
 
 	t.Run("Returns not found error when queue does not exist", func(t *testing.T) {
@@ -664,9 +678,7 @@ func TestHandleExchangeBindingAdd(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusNotFound, response.Code)
-		assert.JSONEq(t, "{\"code\":\"QUEUE_NOT_FOUND\",\"message\":\"Queue 'nonExistingQueueName' not found\"}", response.Body.String())
+		assertNotFound(t, response, "QUEUE_NOT_FOUND", "Queue 'nonExistingQueueName' not found")
 	})
 
 	t.Run("Returns conflict error when binding already exists", func(t *testing.T) {
@@ -691,8 +703,7 @@ func TestHandleExchangeBindingAdd(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-		assert.Equal(t, http.StatusConflict, response.Code)
-		assert.JSONEq(t, "{\"code\":\"BINDING_ALREADY_EXISTS\",\"message\":\"Binding to Queue 'events' already exists\"}", response.Body.String())
+		assertConflict(t, response, "BINDING_ALREADY_EXISTS", "Binding to Queue 'events' already exists")
 	})
 
 	t.Run("Returns validation error when no queue name supplied", func(t *testing.T) {
@@ -714,8 +725,9 @@ func TestHandleExchangeBindingAdd(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(t, "{\"code\":\"VALIDATION_ERROR\",\"errors\":[{\"field\":\"queue\",\"message\":\"This field is required\"}]}", response.Body.String())
+		assertValidationErrors(t, response, []errs.ValidationError{
+			{"queue", "This field is required"},
+		})
 	})
 }
 
@@ -739,8 +751,7 @@ func TestHandleExchangeBindingDelete(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusAccepted, response.Code)
+		assertAccepted(t, response)
 	})
 
 	t.Run("Returns not found error when exchange does not exist", func(t *testing.T) {
@@ -760,9 +771,7 @@ func TestHandleExchangeBindingDelete(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusNotFound, response.Code)
-		assert.JSONEq(t, "{\"code\":\"EXCHANGE_NOT_FOUND\",\"message\":\"Exchange 'nonExistingExchangeName' not found\"}", response.Body.String())
+		assertNotFound(t, response, "EXCHANGE_NOT_FOUND", "Exchange 'nonExistingExchangeName' not found")
 	})
 
 	t.Run("Returns not found error when binding does not exist", func(t *testing.T) {
@@ -783,10 +792,7 @@ func TestHandleExchangeBindingDelete(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusNotFound, response.Code)
-		expectedJson := fmt.Sprintf("{\"code\":\"BINDING_NOT_FOUND\",\"message\":\"Binding '%s' not found\"}", nonExistingBindingId)
-		assert.JSONEq(t, expectedJson, response.Body.String())
+		assertNotFound(t, response, "BINDING_NOT_FOUND", fmt.Sprintf("Binding '%s' not found", nonExistingBindingId))
 	})
 
 	t.Run("Returns validation error when wrong binding id format supplied", func(t *testing.T) {
@@ -809,7 +815,10 @@ func TestHandleExchangeBindingDelete(t *testing.T) {
 		server.ServeHTTP(response, request)
 
 		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(t, "{\"code\":\"INVALID_PARAM\",\"param\":\"bindingId\",\"message\":\"invalid UUID length: 3\"}", response.Body.String())
+		jsonResponse := JSONItemResponse(response)
+		assert.Equal(t, "INVALID_PARAM", jsonResponse["code"])
+		assert.Equal(t, "bindingId", jsonResponse["param"])
+		assert.Equal(t, "invalid UUID length: 3", jsonResponse["message"])
 	})
 }
 
@@ -841,7 +850,7 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 		request = httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response = httptest.NewRecorder()
 		server.ServeHTTP(response, request)
-		assert.Equal(t, http.StatusOK, response.Code)
+		assertOk(t, response)
 		assert.Empty(t, response.Body)
 	})
 
@@ -853,9 +862,9 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(t, "{\"code\":\"VALIDATION_ERROR\",\"errors\":[{\"field\":\"payload\",\"message\":\"This field is required\"}]}", response.Body.String())
+		assertValidationErrors(t, response, []errs.ValidationError{
+			{"payload", "This field is required"},
+		})
 	})
 
 	t.Run("Returns validation error when message payload is empty", func(t *testing.T) {
@@ -869,9 +878,9 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(t, "{\"code\":\"VALIDATION_ERROR\",\"errors\":[{\"field\":\"payload\",\"message\":\"This field is required\"}]}", response.Body.String())
+		assertValidationErrors(t, response, []errs.ValidationError{
+			{"payload", "This field is required"},
+		})
 	})
 
 	t.Run("Returns validation error when message payload is nil", func(t *testing.T) {
@@ -885,9 +894,9 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusBadRequest, response.Code)
-		assert.JSONEq(t, "{\"code\":\"VALIDATION_ERROR\",\"errors\":[{\"field\":\"payload\",\"message\":\"This field is required\"}]}", response.Body.String())
+		assertValidationErrors(t, response, []errs.ValidationError{
+			{"payload", "This field is required"},
+		})
 	})
 
 	t.Run("Returns not found when exchange does not exist", func(t *testing.T) {
@@ -908,10 +917,59 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
-
-		assert.Equal(t, http.StatusNotFound, response.Code)
-		assert.JSONEq(t, "{\"code\":\"EXCHANGE_NOT_FOUND\",\"message\":\"Exchange 'app.external' not found\"}", response.Body.String())
+		assertNotFound(t, response, "EXCHANGE_NOT_FOUND", "Exchange 'app.external' not found")
 	})
 
 	// TODO: Check message is routed to queue
+}
+
+func assertOk(t *testing.T, response *httptest.ResponseRecorder) {
+	assert.Equal(t, http.StatusOK, response.Code)
+}
+
+func assertAccepted(t *testing.T, response *httptest.ResponseRecorder) {
+	assert.Equal(t, http.StatusAccepted, response.Code)
+}
+
+func assertCreated(t *testing.T, response *httptest.ResponseRecorder) {
+	assert.Equal(t, http.StatusCreated, response.Code)
+}
+
+func assertNotFound(t *testing.T, response *httptest.ResponseRecorder, errorCode string, errorMessage string) {
+	assert.Equal(t, http.StatusNotFound, response.Code)
+	jsonResponse := JSONItemResponse(response)
+	assert.Equal(t, errorCode, jsonResponse["code"])
+	assert.Equal(t, errorMessage, jsonResponse["message"])
+}
+
+func assertValidationErrors(t *testing.T, response *httptest.ResponseRecorder, expectedErrors []errs.ValidationError) {
+	assert.Equal(t, http.StatusBadRequest, response.Code)
+	jsonResponse := JSONItemResponse(response)
+	assert.Equal(t, "VALIDATION_ERROR", jsonResponse["code"])
+	assert.Len(t, jsonResponse["errors"], len(expectedErrors))
+
+	errors := jsonResponse["errors"].([]interface{})
+	for i, expectedErr := range expectedErrors {
+		assert.Equal(t, expectedErr.Field, errors[i].(map[string]interface{})["field"])
+		assert.Equal(t, expectedErr.Message, errors[i].(map[string]interface{})["message"])
+	}
+}
+
+func assertConflict(t *testing.T, response *httptest.ResponseRecorder, errorCode string, errorMessage string) {
+	assert.Equal(t, http.StatusConflict, response.Code)
+	jsonResponse := JSONItemResponse(response)
+	assert.Equal(t, errorCode, jsonResponse["code"])
+	assert.Equal(t, errorMessage, jsonResponse["message"])
+}
+
+func JSONCollectionResponse(response *httptest.ResponseRecorder) (jsonResponse []map[string]interface{}) {
+	_ = json.Unmarshal([]byte(response.Body.String()), &jsonResponse)
+
+	return jsonResponse
+}
+
+func JSONItemResponse(response *httptest.ResponseRecorder) (jsonResponse map[string]interface{}) {
+	_ = json.Unmarshal([]byte(response.Body.String()), &jsonResponse)
+
+	return jsonResponse
 }
