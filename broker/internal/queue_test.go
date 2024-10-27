@@ -19,10 +19,10 @@ func TestQueueConcurrency(t *testing.T) {
 		t.Parallel()
 		q := &Queue{Name: "testQueue", Durability: Durability.DURABLE}
 		var wg sync.WaitGroup
-		numOperations := 100
+		numOperations := 1000
 
+		wg.Add(numOperations)
 		for i := 0; i < numOperations; i++ {
-			wg.Add(1)
 			go func(i int) {
 				defer wg.Done()
 				message := &Message{Id: uuid.New(), Payload: fmt.Sprintf("Message %d", i)}
@@ -31,8 +31,8 @@ func TestQueueConcurrency(t *testing.T) {
 			}(i)
 		}
 
+		wg.Add(numOperations)
 		for i := 0; i < numOperations; i++ {
-			wg.Add(1)
 			go func() {
 				defer wg.Done()
 				message, dequeueErr := q.Dequeue()

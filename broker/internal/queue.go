@@ -46,7 +46,7 @@ func (q *Queue) Dequeue() (message *Message, err errs.AppError) {
 	return nil, errs.NewMessageNotFoundError("No pending messages available")
 }
 
-func (q *Queue) Seek(count int) (messages []*Message, err errs.AppError) {
+func (q *Queue) Peek(limit int) (messages []*Message, err errs.AppError) {
 	q.Lock()
 	defer q.Unlock()
 
@@ -55,13 +55,13 @@ func (q *Queue) Seek(count int) (messages []*Message, err errs.AppError) {
 		return messages, nil
 	}
 
-	if count > messagesCount {
-		count = messagesCount
+	if limit > messagesCount {
+		limit = messagesCount
 	}
 
 	var result []*Message
 	for _, m := range q.Messages {
-		if !m.IsAwaiting() && len(result) < count {
+		if !m.IsAwaiting() && len(result) < limit {
 			result = append(result, m)
 		}
 	}

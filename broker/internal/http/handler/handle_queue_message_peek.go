@@ -14,12 +14,12 @@ import (
 	"github.com/melyouz/risala/broker/internal/storage"
 )
 
-func HandleQueueMessageGet(queueRepository storage.QueueRepository) http.HandlerFunc {
+func HandleQueueMessagePeek(queueRepository storage.QueueRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		countParam := "count"
-		messagesCount, _ := strconv.Atoi(r.URL.Query().Get(countParam))
-		if messagesCount < 1 {
-			messagesCount = 1
+		limitParamName := "limit"
+		limit, _ := strconv.Atoi(r.URL.Query().Get(limitParamName))
+		if limit < 1 {
+			limit = 1
 		}
 
 		queueName := chi.URLParam(r, "queueName")
@@ -29,7 +29,7 @@ func HandleQueueMessageGet(queueRepository storage.QueueRepository) http.Handler
 			return
 		}
 
-		messages, err := queue.Seek(messagesCount)
+		messages, err := queue.Peek(limit)
 		if err != nil {
 			util.Respond(w, err, util.HttpStatusCodeFromAppError(err))
 			return

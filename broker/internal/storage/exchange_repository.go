@@ -11,7 +11,7 @@ import (
 
 type ExchangeRepository interface {
 	StoreExchange(exchange *internal.Exchange)
-	GetExchange(name string) (queue *internal.Exchange, err errs.AppError)
 	FindExchanges() []*internal.Exchange
+	GetExchange(name string) (queue *internal.Exchange, err errs.AppError)
 	DeleteExchange(name string) (err errs.AppError)
 }

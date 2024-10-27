@@ -11,7 +11,7 @@ import (
 
 type QueueRepository interface {
 	StoreQueue(queue *internal.Queue)
-	GetQueue(name string) (queue *internal.Queue, err errs.AppError)
 	FindQueues() []*internal.Queue
+	GetQueue(name string) (queue *internal.Queue, err errs.AppError)
 	DeleteQueue(name string) (err errs.AppError)
 }

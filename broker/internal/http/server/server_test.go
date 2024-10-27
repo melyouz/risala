@@ -286,7 +286,7 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
-		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, "tmp")
+		path := fmt.Sprintf("%s/queues/%s/messages/publish", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -300,7 +300,7 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{})
 		server := createTestServer(ServerSampleData{})
-		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, "tmp")
+		path := fmt.Sprintf("%s/queues/%s/messages/publish", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -317,7 +317,7 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 		})
 
 		server := createTestServer(ServerSampleData{})
-		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, "tmp")
+		path := fmt.Sprintf("%s/queues/%s/messages/publish", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -334,7 +334,7 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 		})
 
 		server := createTestServer(ServerSampleData{})
-		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, "tmp")
+		path := fmt.Sprintf("%s/queues/%s/messages/publish", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -354,7 +354,7 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 				"events": newTestQueue("events", internal.Durability.DURABLE),
 			},
 		})
-		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, "tmp")
+		path := fmt.Sprintf("%s/queues/%s/messages/publish", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -363,7 +363,7 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 	})
 }
 
-func TestHandleQueueMessageGet(t *testing.T) {
+func TestHandleQueueMessagePeek(t *testing.T) {
 	t.Parallel()
 	t.Run("Returns empty list when no messages", func(t *testing.T) {
 		t.Parallel()
@@ -373,7 +373,7 @@ func TestHandleQueueMessageGet(t *testing.T) {
 				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
-		path := fmt.Sprintf("%s/queues/%s/messages?count=1", ApiV1BasePath, "tmp")
+		path := fmt.Sprintf("%s/queues/%s/messages/peek?limit=1", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodGet, path, nil)
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, request)
@@ -392,7 +392,7 @@ func TestHandleQueueMessageGet(t *testing.T) {
 			},
 		})
 
-		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, "tmp")
+		path := fmt.Sprintf("%s/queues/%s/messages/publish", ApiV1BasePath, "tmp")
 		for i := 1; i <= 3; i++ {
 			messageBody, _ := json.Marshal(map[string]interface{}{
 				"payload": fmt.Sprintf("Message %d", i),
@@ -404,7 +404,7 @@ func TestHandleQueueMessageGet(t *testing.T) {
 			assert.Empty(t, response.Body)
 		}
 
-		path = fmt.Sprintf("%s/queues/%s/messages", ApiV1BasePath, "tmp")
+		path = fmt.Sprintf("%s/queues/%s/messages/peek", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodGet, path, nil)
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, request)
@@ -415,7 +415,7 @@ func TestHandleQueueMessageGet(t *testing.T) {
 		assert.NotEmpty(t, jsonResponse1[0]["id"])
 		assert.Equal(t, "Message 1", jsonResponse1[0]["payload"])
 
-		path = fmt.Sprintf("%s/queues/%s/messages?count=2", ApiV1BasePath, "tmp")
+		path = fmt.Sprintf("%s/queues/%s/messages/peek?limit=2", ApiV1BasePath, "tmp")
 		request = httptest.NewRequest(http.MethodGet, path, nil)
 		response = httptest.NewRecorder()
 		server.ServeHTTP(response, request)
@@ -428,7 +428,7 @@ func TestHandleQueueMessageGet(t *testing.T) {
 		assert.NotEmpty(t, jsonResponse2[0]["id"])
 		assert.Equal(t, "Message 2", jsonResponse2[1]["payload"])
 
-		path = fmt.Sprintf("%s/queues/%s/messages?count=200", ApiV1BasePath, "tmp")
+		path = fmt.Sprintf("%s/queues/%s/messages/peek?limit=200", ApiV1BasePath, "tmp")
 		request = httptest.NewRequest(http.MethodGet, path, nil)
 		response = httptest.NewRecorder()
 		server.ServeHTTP(response, request)
@@ -454,7 +454,7 @@ func TestHandleQueueMessageGet(t *testing.T) {
 				"events": newTestQueue("events", internal.Durability.DURABLE),
 			},
 		})
-		path := fmt.Sprintf("%s/queues/%s/messages", ApiV1BasePath, "tmp")
+		path := fmt.Sprintf("%s/queues/%s/messages/peek", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodGet, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -913,7 +913,7 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": "Hello world!",
 		})
-		path = fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, "app.internal")
+		path = fmt.Sprintf("%s/exchanges/%s/messages/publish", ApiV1BasePath, "app.internal")
 		request = httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response = httptest.NewRecorder()
 		server.ServeHTTP(response, request)
@@ -925,7 +925,7 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{})
 		server := createTestServer(ServerSampleData{})
-		path := fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, "tmp")
+		path := fmt.Sprintf("%s/exchanges/%s/messages/publish", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -942,7 +942,7 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 		})
 
 		server := createTestServer(ServerSampleData{})
-		path := fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, "tmp")
+		path := fmt.Sprintf("%s/exchanges/%s/messages/publish", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -959,7 +959,7 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 		})
 
 		server := createTestServer(ServerSampleData{})
-		path := fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, "tmp")
+		path := fmt.Sprintf("%s/exchanges/%s/messages/publish", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -983,7 +983,7 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
-		path := fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, "app.external")
+		path := fmt.Sprintf("%s/exchanges/%s/messages/publish", ApiV1BasePath, "app.external")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
