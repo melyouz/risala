@@ -15,6 +15,11 @@ test:
 	@echo "Testing..."
 	@go test ./... -v
 
+.PHONY: race
+race:
+	@echo "Testing (-race)..."
+	@go test ./... -v -race
+
 .PHONY: run
 run:
 	@echo "Running..."

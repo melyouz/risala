@@ -29,7 +29,7 @@ func HandleExchangeMessagePublish(
 		util.Decode(r, &message)
 
 		var vErrors validator.ValidationErrors
-		if errors.As(validate.Struct(message), &vErrors) {
+		if errors.As(validate.Struct(&message), &vErrors) {
 			util.Respond(w, errs.NewValidationError(vErrors), http.StatusBadRequest)
 			return
 		}
@@ -42,7 +42,13 @@ func HandleExchangeMessagePublish(
 		}
 
 		for _, binding := range exchange.Bindings {
-			publishErr := queueRepository.PublishMessage(binding.Queue, message)
+			queue, queueErr := queueRepository.GetQueue(binding.Queue)
+			if queueErr != nil {
+				util.Respond(w, queueErr, util.HttpStatusCodeFromAppError(queueErr))
+				return
+			}
+
+			publishErr := queue.Enqueue(&message)
 			if publishErr != nil {
 				util.Respond(w, publishErr, util.HttpStatusCodeFromAppError(publishErr))
 				return

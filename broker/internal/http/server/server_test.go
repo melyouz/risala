@@ -18,29 +18,37 @@ import (
 
 	"github.com/melyouz/risala/broker/internal"
 	"github.com/melyouz/risala/broker/internal/errs"
-	"github.com/melyouz/risala/broker/internal/sample"
 	"github.com/melyouz/risala/broker/internal/storage"
 	"github.com/melyouz/risala/broker/internal/testing/util"
 )
 
-var testEventsQueue = sample.Queues["events"]
-var testTmpQueue = sample.Queues["tmp"]
-
-var testInternalExchange = sample.Exchanges["app.internal"]
-var testExternalExchange = sample.Exchanges["app.external"]
-
 type ServerSampleData struct {
-	queues    map[string]internal.Queue
-	exchanges map[string]internal.Exchange
+	queues    map[string]*internal.Queue
+	exchanges map[string]*internal.Exchange
+}
+
+func newTestQueue(name string, durability internal.DurabilityType) (queue *internal.Queue) {
+	return &internal.Queue{
+		Name:       name,
+		Durability: durability,
+		Messages:   []*internal.Message{},
+	}
+}
+
+func newTestExchange(name string) (queue *internal.Exchange) {
+	return &internal.Exchange{
+		Name:     name,
+		Bindings: []*internal.Binding{},
+	}
 }
 
 func createTestServer(sampleData ServerSampleData) (server *Server) {
-	queues := map[string]internal.Queue{}
+	queues := map[string]*internal.Queue{}
 	if sampleData.queues != nil {
 		queues = sampleData.queues
 	}
 
-	exchanges := map[string]internal.Exchange{}
+	exchanges := map[string]*internal.Exchange{}
 	if sampleData.exchanges != nil {
 		exchanges = sampleData.exchanges
 	}
@@ -59,11 +67,13 @@ func createTestServer(sampleData ServerSampleData) (server *Server) {
 }
 
 func TestHandleQueuesFind(t *testing.T) {
+	t.Parallel()
 	t.Run("Returns list when queues exist", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
 		request := httptest.NewRequest(http.MethodGet, ApiV1BasePath+"/queues", nil)
@@ -73,13 +83,14 @@ func TestHandleQueuesFind(t *testing.T) {
 		util.AssertOk(t, response)
 		jsonResponse := util.JSONCollectionResponse(response)
 		assert.Len(t, jsonResponse, 2)
-		assert.Equal(t, testEventsQueue.Name, jsonResponse[0]["name"])
-		assert.Equal(t, testEventsQueue.Durability.String(), jsonResponse[0]["durability"])
-		assert.Equal(t, testTmpQueue.Name, jsonResponse[1]["name"])
-		assert.Equal(t, testTmpQueue.Durability.String(), jsonResponse[1]["durability"])
+		assert.Equal(t, "events", jsonResponse[0]["name"])
+		assert.Equal(t, internal.Durability.DURABLE.String(), jsonResponse[0]["durability"])
+		assert.Equal(t, "tmp", jsonResponse[1]["name"])
+		assert.Equal(t, internal.Durability.TRANSIENT.String(), jsonResponse[1]["durability"])
 	})
 
 	t.Run("Returns empty list when no queues", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{})
 		request := httptest.NewRequest(http.MethodGet, ApiV1BasePath+"/queues", nil)
 		response := httptest.NewRecorder()
@@ -92,14 +103,16 @@ func TestHandleQueuesFind(t *testing.T) {
 }
 
 func TestHandleQueueGet(t *testing.T) {
+	t.Parallel()
 	t.Run("Returns queue when exists", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
-		path := fmt.Sprintf("%s/queues/%s", ApiV1BasePath, testEventsQueue.Name)
+		path := fmt.Sprintf("%s/queues/%s", ApiV1BasePath, "events")
 		request := httptest.NewRequest(http.MethodGet, path, nil)
 		response := httptest.NewRecorder()
 
@@ -107,15 +120,16 @@ func TestHandleQueueGet(t *testing.T) {
 
 		util.AssertOk(t, response)
 		jsonResponse := util.JSONItemResponse(response)
-		assert.Equal(t, testEventsQueue.Name, jsonResponse["name"])
-		assert.Equal(t, testEventsQueue.Durability.String(), jsonResponse["durability"])
+		assert.Equal(t, "events", jsonResponse["name"])
+		assert.Equal(t, internal.Durability.DURABLE.String(), jsonResponse["durability"])
 	})
 
 	t.Run("Returns not found when queue does not exist", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
 		request := httptest.NewRequest(http.MethodGet, ApiV1BasePath+"/queues/nonExistingQueueName", nil)
@@ -127,7 +141,9 @@ func TestHandleQueueGet(t *testing.T) {
 }
 
 func TestHandleQueueCreate(t *testing.T) {
+	t.Parallel()
 	t.Run("Creates durable queue when validations pass", func(t *testing.T) {
+		t.Parallel()
 		queueBody, _ := json.Marshal(map[string]interface{}{
 			"name":       "testDurableQueueName",
 			"durability": "durable",
@@ -144,6 +160,7 @@ func TestHandleQueueCreate(t *testing.T) {
 	})
 
 	t.Run("Creates transient queue when validations pass", func(t *testing.T) {
+		t.Parallel()
 		queueBody, _ := json.Marshal(map[string]interface{}{
 			"name":       "testTransientQueueName",
 			"durability": "transient",
@@ -160,6 +177,7 @@ func TestHandleQueueCreate(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when unknown queue durability", func(t *testing.T) {
+		t.Parallel()
 		queueBody, _ := json.Marshal(map[string]interface{}{
 			"name":       "testUnknownQueueName",
 			"durability": "whatever",
@@ -175,6 +193,7 @@ func TestHandleQueueCreate(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when no queue name supplied", func(t *testing.T) {
+		t.Parallel()
 		queueBody, _ := json.Marshal(map[string]interface{}{
 			"durability": "durable",
 		})
@@ -189,6 +208,7 @@ func TestHandleQueueCreate(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when no queue durability supplied", func(t *testing.T) {
+		t.Parallel()
 		queueBody, _ := json.Marshal(map[string]interface{}{
 			"name": "unknownQueueType",
 		})
@@ -203,6 +223,7 @@ func TestHandleQueueCreate(t *testing.T) {
 	})
 
 	t.Run("Returns validation errors when no queue name nor durability supplied", func(t *testing.T) {
+		t.Parallel()
 		queueBody, _ := json.Marshal(map[string]interface{}{
 			"fullName": "nonMappedField",
 		})
@@ -219,14 +240,16 @@ func TestHandleQueueCreate(t *testing.T) {
 }
 
 func TestHandleQueueDelete(t *testing.T) {
+	t.Parallel()
 	t.Run("Returns accepted when queue exists", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
-		path := fmt.Sprintf("%s/queues/%s", ApiV1BasePath, testEventsQueue.Name)
+		path := fmt.Sprintf("%s/queues/%s", ApiV1BasePath, "events")
 		request := httptest.NewRequest(http.MethodDelete, path, nil)
 		response := httptest.NewRecorder()
 
@@ -235,10 +258,11 @@ func TestHandleQueueDelete(t *testing.T) {
 	})
 
 	t.Run("Returns not found when queue does not exist", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
 		request := httptest.NewRequest(http.MethodDelete, ApiV1BasePath+"/queues/nonExistingQueueName", nil)
@@ -250,17 +274,19 @@ func TestHandleQueueDelete(t *testing.T) {
 }
 
 func TestHandleQueueMessagePublish(t *testing.T) {
+	t.Parallel()
 	t.Run("Publishes message when validations pass", func(t *testing.T) {
+		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": "Hello world!",
 		})
 		server := createTestServer(ServerSampleData{
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
-		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, testTmpQueue.Name)
+		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -271,9 +297,10 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when no message payload supplied", func(t *testing.T) {
+		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{})
 		server := createTestServer(ServerSampleData{})
-		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, testTmpQueue.Name)
+		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -284,12 +311,13 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when message payload is empty", func(t *testing.T) {
+		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": "",
 		})
 
 		server := createTestServer(ServerSampleData{})
-		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, testTmpQueue.Name)
+		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -300,12 +328,13 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when message payload is nil", func(t *testing.T) {
+		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": nil,
 		})
 
 		server := createTestServer(ServerSampleData{})
-		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, testTmpQueue.Name)
+		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -316,15 +345,16 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 	})
 
 	t.Run("Returns not found when queue does not exist", func(t *testing.T) {
+		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": "Hello world!",
 		})
 		server := createTestServer(ServerSampleData{
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
 			},
 		})
-		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, testTmpQueue.Name)
+		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -334,14 +364,16 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 }
 
 func TestHandleQueueMessageGet(t *testing.T) {
+	t.Parallel()
 	t.Run("Returns empty list when no messages", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
-		path := fmt.Sprintf("%s/queues/%s/messages?count=1", ApiV1BasePath, testTmpQueue.Name)
+		path := fmt.Sprintf("%s/queues/%s/messages?count=1", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodGet, path, nil)
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, request)
@@ -352,14 +384,15 @@ func TestHandleQueueMessageGet(t *testing.T) {
 	})
 
 	t.Run("Returns messages when exist", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
 
-		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, testTmpQueue.Name)
+		path := fmt.Sprintf("%s/queues/%s/publish", ApiV1BasePath, "tmp")
 		for i := 1; i <= 3; i++ {
 			messageBody, _ := json.Marshal(map[string]interface{}{
 				"payload": fmt.Sprintf("Message %d", i),
@@ -371,7 +404,7 @@ func TestHandleQueueMessageGet(t *testing.T) {
 			assert.Empty(t, response.Body)
 		}
 
-		path = fmt.Sprintf("%s/queues/%s/messages", ApiV1BasePath, testTmpQueue.Name)
+		path = fmt.Sprintf("%s/queues/%s/messages", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodGet, path, nil)
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, request)
@@ -380,9 +413,9 @@ func TestHandleQueueMessageGet(t *testing.T) {
 		_ = json.Unmarshal([]byte(response.Body.String()), &jsonResponse1)
 		assert.Len(t, jsonResponse1, 1)
 		assert.NotEmpty(t, jsonResponse1[0]["id"])
-		assert.Equal(t, "Message 3", jsonResponse1[0]["payload"])
+		assert.Equal(t, "Message 1", jsonResponse1[0]["payload"])
 
-		path = fmt.Sprintf("%s/queues/%s/messages?count=2", ApiV1BasePath, testTmpQueue.Name)
+		path = fmt.Sprintf("%s/queues/%s/messages?count=2", ApiV1BasePath, "tmp")
 		request = httptest.NewRequest(http.MethodGet, path, nil)
 		response = httptest.NewRecorder()
 		server.ServeHTTP(response, request)
@@ -391,11 +424,11 @@ func TestHandleQueueMessageGet(t *testing.T) {
 		_ = json.Unmarshal([]byte(response.Body.String()), &jsonResponse2)
 		assert.Len(t, jsonResponse2, 2)
 		assert.NotEmpty(t, jsonResponse2[0]["id"])
-		assert.Equal(t, "Message 3", jsonResponse2[0]["payload"])
+		assert.Equal(t, "Message 1", jsonResponse2[0]["payload"])
 		assert.NotEmpty(t, jsonResponse2[0]["id"])
 		assert.Equal(t, "Message 2", jsonResponse2[1]["payload"])
 
-		path = fmt.Sprintf("%s/queues/%s/messages?count=200", ApiV1BasePath, testTmpQueue.Name)
+		path = fmt.Sprintf("%s/queues/%s/messages?count=200", ApiV1BasePath, "tmp")
 		request = httptest.NewRequest(http.MethodGet, path, nil)
 		response = httptest.NewRecorder()
 		server.ServeHTTP(response, request)
@@ -404,23 +437,24 @@ func TestHandleQueueMessageGet(t *testing.T) {
 		_ = json.Unmarshal([]byte(response.Body.String()), &jsonResponse3)
 		assert.Len(t, jsonResponse3, 3)
 		assert.NotEmpty(t, jsonResponse3[0]["id"])
-		assert.Equal(t, "Message 3", jsonResponse3[0]["payload"])
+		assert.Equal(t, "Message 1", jsonResponse3[0]["payload"])
 		assert.NotEmpty(t, jsonResponse3[0]["id"])
 		assert.Equal(t, "Message 2", jsonResponse3[1]["payload"])
 		assert.NotEmpty(t, jsonResponse3[0]["id"])
-		assert.Equal(t, "Message 1", jsonResponse3[2]["payload"])
+		assert.Equal(t, "Message 3", jsonResponse3[2]["payload"])
 	})
 
 	t.Run("Returns not found when queue does not exist", func(t *testing.T) {
+		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": "Hello world!",
 		})
 		server := createTestServer(ServerSampleData{
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
 			},
 		})
-		path := fmt.Sprintf("%s/queues/%s/messages", ApiV1BasePath, testTmpQueue.Name)
+		path := fmt.Sprintf("%s/queues/%s/messages", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodGet, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -430,11 +464,13 @@ func TestHandleQueueMessageGet(t *testing.T) {
 }
 
 func TestHandleExchangesFind(t *testing.T) {
+	t.Parallel()
 	t.Run("Returns list when exchanges exist", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
-				testExternalExchange.Name: testExternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				"app.internal": newTestExchange("app.internal"),
+				"app.external": newTestExchange("app.external"),
 			},
 		})
 		request := httptest.NewRequest(http.MethodGet, ApiV1BasePath+"/exchanges", nil)
@@ -445,13 +481,14 @@ func TestHandleExchangesFind(t *testing.T) {
 		util.AssertOk(t, response)
 		jsonResponse := util.JSONCollectionResponse(response)
 		assert.Len(t, jsonResponse, 2)
-		assert.Equal(t, testExternalExchange.Name, jsonResponse[0]["name"])
+		assert.Equal(t, "app.external", jsonResponse[0]["name"])
 		assert.Len(t, jsonResponse[0]["bindings"], 0)
-		assert.Equal(t, testInternalExchange.Name, jsonResponse[1]["name"])
+		assert.Equal(t, "app.internal", jsonResponse[1]["name"])
 		assert.Len(t, jsonResponse[1]["bindings"], 0)
 	})
 
 	t.Run("Returns empty list when no exchanges", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{})
 		request := httptest.NewRequest(http.MethodGet, ApiV1BasePath+"/exchanges", nil)
 		response := httptest.NewRecorder()
@@ -464,14 +501,16 @@ func TestHandleExchangesFind(t *testing.T) {
 }
 
 func TestHandleExchangeGet(t *testing.T) {
+	t.Parallel()
 	t.Run("Returns exchange when exists", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
-				testExternalExchange.Name: testExternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				"app.internal": newTestExchange("app.internal"),
+				"app.external": newTestExchange("app.external"),
 			},
 		})
-		path := fmt.Sprintf("%s/exchanges/%s", ApiV1BasePath, testExternalExchange.Name)
+		path := fmt.Sprintf("%s/exchanges/%s", ApiV1BasePath, "app.external")
 		request := httptest.NewRequest(http.MethodGet, path, nil)
 		response := httptest.NewRecorder()
 
@@ -479,15 +518,16 @@ func TestHandleExchangeGet(t *testing.T) {
 
 		util.AssertOk(t, response)
 		jsonResponse := util.JSONItemResponse(response)
-		assert.Equal(t, testExternalExchange.Name, jsonResponse["name"])
+		assert.Equal(t, "app.external", jsonResponse["name"])
 		assert.Len(t, jsonResponse["bindings"], 0)
 	})
 
 	t.Run("Returns not found when exchange does not exist", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
-				testExternalExchange.Name: testExternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				"app.internal": newTestExchange("app.internal"),
+				"app.external": newTestExchange("app.external"),
 			},
 		})
 		request := httptest.NewRequest(http.MethodGet, ApiV1BasePath+"/exchanges/nonExistingExchangeName", nil)
@@ -499,11 +539,13 @@ func TestHandleExchangeGet(t *testing.T) {
 }
 
 func TestHandleExchangeCreate(t *testing.T) {
+	t.Parallel()
 	t.Run("Creates exchange when validations pass", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
-				testExternalExchange.Name: testExternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				"app.internal": newTestExchange("app.internal"),
+				"app.external": newTestExchange("app.external"),
 			},
 		})
 		exchangeBody, _ := json.Marshal(map[string]interface{}{
@@ -520,6 +562,7 @@ func TestHandleExchangeCreate(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when no exchange name supplied", func(t *testing.T) {
+		t.Parallel()
 		exchangeBody, _ := json.Marshal(map[string]interface{}{})
 		server := createTestServer(ServerSampleData{})
 		request := httptest.NewRequest(http.MethodPost, ApiV1BasePath+"/exchanges", bytes.NewReader(exchangeBody))
@@ -532,6 +575,7 @@ func TestHandleExchangeCreate(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when exchange name is empty", func(t *testing.T) {
+		t.Parallel()
 		exchangeBody, _ := json.Marshal(map[string]interface{}{
 			"name": "",
 		})
@@ -546,6 +590,7 @@ func TestHandleExchangeCreate(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when exchange name is nil", func(t *testing.T) {
+		t.Parallel()
 		exchangeBody, _ := json.Marshal(map[string]interface{}{
 			"name": nil,
 		})
@@ -560,14 +605,15 @@ func TestHandleExchangeCreate(t *testing.T) {
 	})
 
 	t.Run("Returns conflict error when exchange already exists", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
-				testExternalExchange.Name: testExternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				"app.internal": newTestExchange("app.internal"),
+				"app.external": newTestExchange("app.external"),
 			},
 		})
 		exchangeBody, _ := json.Marshal(map[string]interface{}{
-			"name": testInternalExchange.Name,
+			"name": "app.internal",
 		})
 		request := httptest.NewRequest(http.MethodPost, ApiV1BasePath+"/exchanges", bytes.NewReader(exchangeBody))
 		response := httptest.NewRecorder()
@@ -578,14 +624,16 @@ func TestHandleExchangeCreate(t *testing.T) {
 }
 
 func TestHandleExchangeDelete(t *testing.T) {
+	t.Parallel()
 	t.Run("Returns accepted when exchange exists", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
-				testExternalExchange.Name: testExternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				"app.internal": newTestExchange("app.internal"),
+				"app.external": newTestExchange("app.external"),
 			},
 		})
-		path := fmt.Sprintf("%s/exchanges/%s", ApiV1BasePath, testExternalExchange.Name)
+		path := fmt.Sprintf("%s/exchanges/%s", ApiV1BasePath, "app.external")
 		request := httptest.NewRequest(http.MethodDelete, path, nil)
 		response := httptest.NewRecorder()
 
@@ -594,10 +642,11 @@ func TestHandleExchangeDelete(t *testing.T) {
 	})
 
 	t.Run("Returns not found when exchange does not exist", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
-				testExternalExchange.Name: testExternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				"app.internal": newTestExchange("app.internal"),
+				"app.external": newTestExchange("app.external"),
 			},
 		})
 		request := httptest.NewRequest(http.MethodDelete, ApiV1BasePath+"/exchanges/nonExistingExchangeName", nil)
@@ -609,22 +658,24 @@ func TestHandleExchangeDelete(t *testing.T) {
 }
 
 func TestHandleExchangeBindingAdd(t *testing.T) {
+	t.Parallel()
 	t.Run("Adds binding when validations pass", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
-				testExternalExchange.Name: testExternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				"app.internal": newTestExchange("app.internal"),
+				"app.external": newTestExchange("app.external"),
 			},
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
 		bindingBody, _ := json.Marshal(map[string]interface{}{
-			"queue":      testEventsQueue.Name,
+			"queue":      "events",
 			"routingKey": "#",
 		})
-		path := fmt.Sprintf("%s/exchanges/%s/bindings", ApiV1BasePath, testInternalExchange.Name)
+		path := fmt.Sprintf("%s/exchanges/%s/bindings", ApiV1BasePath, "app.internal")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(bindingBody))
 		response := httptest.NewRecorder()
 
@@ -632,23 +683,24 @@ func TestHandleExchangeBindingAdd(t *testing.T) {
 		util.AssertCreated(t, response)
 		jsonResponse := util.JSONItemResponse(response)
 		assert.NotEmpty(t, jsonResponse["id"])
-		assert.Equal(t, testEventsQueue.Name, jsonResponse["queue"])
+		assert.Equal(t, "events", jsonResponse["queue"])
 		assert.Equal(t, "#", jsonResponse["routingKey"])
 	})
 
 	t.Run("Returns not found error when exchange does not exist", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
-				testExternalExchange.Name: testExternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				"app.internal": newTestExchange("app.internal"),
+				"app.external": newTestExchange("app.external"),
 			},
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
 		bindingBody, _ := json.Marshal(map[string]interface{}{
-			"queue":      testEventsQueue.Name,
+			"queue":      "events",
 			"routingKey": "#",
 		})
 		path := fmt.Sprintf("%s/exchanges/nonExistingExchangeName/bindings", ApiV1BasePath)
@@ -660,21 +712,22 @@ func TestHandleExchangeBindingAdd(t *testing.T) {
 	})
 
 	t.Run("Returns not found error when queue does not exist", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
-				testExternalExchange.Name: testExternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				"app.internal": newTestExchange("app.internal"),
+				"app.external": newTestExchange("app.external"),
 			},
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
 		bindingBody, _ := json.Marshal(map[string]interface{}{
 			"queue":      "nonExistingQueueName",
 			"routingKey": "#",
 		})
-		path := fmt.Sprintf("%s/exchanges/%s/bindings", ApiV1BasePath, testInternalExchange.Name)
+		path := fmt.Sprintf("%s/exchanges/%s/bindings", ApiV1BasePath, "app.internal")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(bindingBody))
 		response := httptest.NewRecorder()
 
@@ -683,23 +736,26 @@ func TestHandleExchangeBindingAdd(t *testing.T) {
 	})
 
 	t.Run("Returns conflict error when binding already exists", func(t *testing.T) {
+		t.Parallel()
+		internalTestExchange := newTestExchange("app.internal")
+		externalTestExchange := newTestExchange("app.external")
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
-				testExternalExchange.Name: testExternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				internalTestExchange.Name: internalTestExchange,
+				externalTestExchange.Name: externalTestExchange,
 			},
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
-		_ = server.exchangeRepository.AddBinding(testInternalExchange.Name, internal.Binding{Id: uuid.New(), Queue: testEventsQueue.Name})
+		_ = internalTestExchange.Bind(&internal.Binding{Id: uuid.New(), Queue: "events"})
 
 		bindingBody, _ := json.Marshal(map[string]interface{}{
-			"queue":      testEventsQueue.Name,
+			"queue":      "events",
 			"routingKey": "#",
 		})
-		path := fmt.Sprintf("%s/exchanges/%s/bindings", ApiV1BasePath, testInternalExchange.Name)
+		path := fmt.Sprintf("%s/exchanges/%s/bindings", ApiV1BasePath, "app.internal")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(bindingBody))
 		response := httptest.NewRecorder()
 
@@ -708,20 +764,21 @@ func TestHandleExchangeBindingAdd(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when no queue name supplied", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
-				testExternalExchange.Name: testExternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				"app.internal": newTestExchange("app.internal"),
+				"app.external": newTestExchange("app.external"),
 			},
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
 		bindingBody, _ := json.Marshal(map[string]interface{}{
 			"routingKey": "#",
 		})
-		path := fmt.Sprintf("%s/exchanges/%s/bindings", ApiV1BasePath, testInternalExchange.Name)
+		path := fmt.Sprintf("%s/exchanges/%s/bindings", ApiV1BasePath, "app.internal")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(bindingBody))
 		response := httptest.NewRecorder()
 
@@ -733,21 +790,25 @@ func TestHandleExchangeBindingAdd(t *testing.T) {
 }
 
 func TestHandleExchangeBindingDelete(t *testing.T) {
+	t.Parallel()
 	t.Run("Deletes binding when validations pass", func(t *testing.T) {
+		t.Parallel()
+		internalTestExchange := newTestExchange("app.internal")
+		externalTestExchange := newTestExchange("app.external")
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
-				testExternalExchange.Name: testExternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				internalTestExchange.Name: internalTestExchange,
+				externalTestExchange.Name: externalTestExchange,
 			},
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
-		binding := internal.Binding{Id: uuid.New(), Queue: testEventsQueue.Name}
-		_ = server.exchangeRepository.AddBinding(testInternalExchange.Name, binding)
+		binding := &internal.Binding{Id: uuid.New(), Queue: "events"}
+		_ = internalTestExchange.Bind(binding)
 
-		path := fmt.Sprintf("%s/exchanges/%s/bindings/%s", ApiV1BasePath, testInternalExchange.Name, binding.Id)
+		path := fmt.Sprintf("%s/exchanges/%s/bindings/%s", ApiV1BasePath, "app.internal", binding.Id)
 		request := httptest.NewRequest(http.MethodDelete, path, nil)
 		response := httptest.NewRecorder()
 
@@ -756,14 +817,15 @@ func TestHandleExchangeBindingDelete(t *testing.T) {
 	})
 
 	t.Run("Returns not found error when exchange does not exist", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
-				testExternalExchange.Name: testExternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				"app.internal": newTestExchange("app.internal"),
+				"app.external": newTestExchange("app.external"),
 			},
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
 
@@ -776,19 +838,20 @@ func TestHandleExchangeBindingDelete(t *testing.T) {
 	})
 
 	t.Run("Returns not found error when binding does not exist", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
-				testExternalExchange.Name: testExternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				"app.internal": newTestExchange("app.internal"),
+				"app.external": newTestExchange("app.external"),
 			},
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
 
 		nonExistingBindingId := uuid.New().String()
-		path := fmt.Sprintf("%s/exchanges/%s/bindings/%s", ApiV1BasePath, testInternalExchange.Name, nonExistingBindingId)
+		path := fmt.Sprintf("%s/exchanges/%s/bindings/%s", ApiV1BasePath, "app.internal", nonExistingBindingId)
 		request := httptest.NewRequest(http.MethodDelete, path, nil)
 		response := httptest.NewRecorder()
 
@@ -797,19 +860,20 @@ func TestHandleExchangeBindingDelete(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when wrong binding id format supplied", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
-				testExternalExchange.Name: testExternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				"app.internal": newTestExchange("app.internal"),
+				"app.external": newTestExchange("app.external"),
 			},
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
 
 		wrongBindingId := "123"
-		path := fmt.Sprintf("%s/exchanges/%s/bindings/%s", ApiV1BasePath, testInternalExchange.Name, wrongBindingId)
+		path := fmt.Sprintf("%s/exchanges/%s/bindings/%s", ApiV1BasePath, "app.internal", wrongBindingId)
 		request := httptest.NewRequest(http.MethodDelete, path, nil)
 		response := httptest.NewRecorder()
 
@@ -824,22 +888,24 @@ func TestHandleExchangeBindingDelete(t *testing.T) {
 }
 
 func TestHandleExchangeMessagePublish(t *testing.T) {
+	t.Parallel()
 	t.Run("Publishes message when validations pass & queue binding exists", func(t *testing.T) {
+		t.Parallel()
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
-				testExternalExchange.Name: testExternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				"app.internal": newTestExchange("app.internal"),
+				"app.external": newTestExchange("app.external"),
 			},
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
 		bindingBody, _ := json.Marshal(map[string]interface{}{
-			"queue":      testTmpQueue.Name,
+			"queue":      "tmp",
 			"routingKey": "#",
 		})
-		path := fmt.Sprintf("%s/exchanges/%s/bindings", ApiV1BasePath, testInternalExchange.Name)
+		path := fmt.Sprintf("%s/exchanges/%s/bindings", ApiV1BasePath, "app.internal")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(bindingBody))
 		response := httptest.NewRecorder()
 		server.ServeHTTP(response, request)
@@ -847,7 +913,7 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": "Hello world!",
 		})
-		path = fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, testInternalExchange.Name)
+		path = fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, "app.internal")
 		request = httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response = httptest.NewRecorder()
 		server.ServeHTTP(response, request)
@@ -856,9 +922,10 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when no message payload supplied", func(t *testing.T) {
+		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{})
 		server := createTestServer(ServerSampleData{})
-		path := fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, testTmpQueue.Name)
+		path := fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -869,12 +936,13 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when message payload is empty", func(t *testing.T) {
+		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": "",
 		})
 
 		server := createTestServer(ServerSampleData{})
-		path := fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, testTmpQueue.Name)
+		path := fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -885,12 +953,13 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when message payload is nil", func(t *testing.T) {
+		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": nil,
 		})
 
 		server := createTestServer(ServerSampleData{})
-		path := fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, testTmpQueue.Name)
+		path := fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, "tmp")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 
@@ -901,19 +970,20 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 	})
 
 	t.Run("Returns not found when exchange does not exist", func(t *testing.T) {
+		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": "Hello world!",
 		})
 		server := createTestServer(ServerSampleData{
-			exchanges: map[string]internal.Exchange{
-				testInternalExchange.Name: testInternalExchange,
+			exchanges: map[string]*internal.Exchange{
+				"app.internal": newTestExchange("app.internal"),
 			},
-			queues: map[string]internal.Queue{
-				testEventsQueue.Name: testEventsQueue,
-				testTmpQueue.Name:    testTmpQueue,
+			queues: map[string]*internal.Queue{
+				"events": newTestQueue("events", internal.Durability.DURABLE),
+				"tmp":    newTestQueue("tmp", internal.Durability.TRANSIENT),
 			},
 		})
-		path := fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, testExternalExchange.Name)
+		path := fmt.Sprintf("%s/exchanges/%s/publish", ApiV1BasePath, "app.external")
 		request := httptest.NewRequest(http.MethodPost, path, bytes.NewReader(messageBody))
 		response := httptest.NewRecorder()
 

@@ -37,9 +37,15 @@ func HandleExchangeBindingAdd(exchangeRepository storage.ExchangeRepository, que
 		}
 
 		exchangeName := chi.URLParam(r, "exchangeName")
-		bindingErr := exchangeRepository.AddBinding(exchangeName, binding)
-		if bindingErr != nil {
-			util.Respond(w, bindingErr, util.HttpStatusCodeFromAppError(bindingErr))
+		exchange, exchangeErr := exchangeRepository.GetExchange(exchangeName)
+		if exchangeErr != nil {
+			util.Respond(w, exchangeErr, util.HttpStatusCodeFromAppError(exchangeErr))
+			return
+		}
+
+		bindErr := exchange.Bind(&binding)
+		if bindErr != nil {
+			util.Respond(w, bindErr, util.HttpStatusCodeFromAppError(bindErr))
 			return
 		}
 

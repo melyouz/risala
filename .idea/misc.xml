@@ -3,19 +3,4 @@
   <component name="ComposerSettings">
     <execution />
   </component>
-  <component name="excludedPrintfFunctions.xml">
-    <option name="excludedDescriptors">
-      <set>
-        <PrintfFuncDescriptorState>
-          <option name="importPath" value="log" />
-          <option name="name" value="Printf" />
-        </PrintfFuncDescriptorState>
-      </set>
-    </option>
-    <option name="excludedNames">
-      <set>
-        <option value="Printf" />
-      </set>
-    </option>
-  </component>
 </project>

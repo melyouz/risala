@@ -26,7 +26,13 @@ func HandleExchangeBindingDelete(exchangeRepository storage.ExchangeRepository) 
 		}
 
 		exchangeName := chi.URLParam(r, "exchangeName")
-		bindingErr := exchangeRepository.DeleteBinding(exchangeName, bindingId)
+		exchange, exchangeErr := exchangeRepository.GetExchange(exchangeName)
+		if exchangeErr != nil {
+			util.Respond(w, exchangeErr, util.HttpStatusCodeFromAppError(exchangeErr))
+			return
+		}
+
+		bindingErr := exchange.Unbind(bindingId)
 		if bindingErr != nil {
 			util.Respond(w, bindingErr, util.HttpStatusCodeFromAppError(bindingErr))
 			return

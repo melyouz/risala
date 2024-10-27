@@ -23,13 +23,13 @@ func HandleExchangeCreate(exchangeRepository storage.ExchangeRepository, validat
 		util.Decode(r, &exchange)
 
 		var vErrors validator.ValidationErrors
-		if errors.As(validate.Struct(exchange), &vErrors) {
+		if errors.As(validate.Struct(&exchange), &vErrors) {
 			util.Respond(w, errs.NewValidationError(vErrors), http.StatusBadRequest)
 			return
 		}
 
 		if exchange.Bindings == nil {
-			exchange.Bindings = []internal.Binding{}
+			exchange.Bindings = []*internal.Binding{}
 		}
 
 		existingExchange, _ := exchangeRepository.GetExchange(exchange.Name)
@@ -41,6 +41,6 @@ func HandleExchangeCreate(exchangeRepository storage.ExchangeRepository, validat
 
 		exchangeRepository.StoreExchange(&exchange)
 
-		util.Respond(w, exchange, http.StatusCreated)
+		util.Respond(w, &exchange, http.StatusCreated)
 	}
 }

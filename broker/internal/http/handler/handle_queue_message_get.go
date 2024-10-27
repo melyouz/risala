@@ -23,7 +23,13 @@ func HandleQueueMessageGet(queueRepository storage.QueueRepository) http.Handler
 		}
 
 		queueName := chi.URLParam(r, "queueName")
-		messages, err := queueRepository.GetMessages(queueName, messagesCount)
+		queue, queueErr := queueRepository.GetQueue(queueName)
+		if queueErr != nil {
+			util.Respond(w, queueErr, util.HttpStatusCodeFromAppError(queueErr))
+			return
+		}
+
+		messages, err := queue.Seek(messagesCount)
 		if err != nil {
 			util.Respond(w, err, util.HttpStatusCodeFromAppError(err))
 			return
