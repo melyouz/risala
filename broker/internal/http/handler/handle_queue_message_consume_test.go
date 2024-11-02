@@ -66,8 +66,9 @@ func TestHandleQueueMessageConsume(t *testing.T) {
 			{Id: uuid.New(), Payload: "Message 4"},
 			{Id: uuid.New(), Payload: "Message 5"},
 		}
+		messagesCount := len(messages)
 		queues["events"].Messages = messages
-		messagesCountBefore := len(messages)
+		assert.Len(t, queues["events"].Messages, messagesCount)
 
 		response, _ := setupQueueMessageConsumeTest(t, queues, "events", "1")
 
@@ -77,7 +78,7 @@ func TestHandleQueueMessageConsume(t *testing.T) {
 		assert.Len(t, jsonResponse, 1)
 		assert.NotEmpty(t, jsonResponse[0]["id"])
 		assert.Equal(t, "Message 1", jsonResponse[0]["payload"])
-		assert.Len(t, queues["events"].Messages, messagesCountBefore-1)
+		assert.Len(t, queues["events"].Messages, messagesCount-1)
 	})
 
 	t.Run("Returns N messages when limit=N and available messages > N", func(t *testing.T) {
@@ -88,8 +89,9 @@ func TestHandleQueueMessageConsume(t *testing.T) {
 			{Id: uuid.New(), Payload: "Message 4"},
 			{Id: uuid.New(), Payload: "Message 5"},
 		}
+		messagesCount := len(messages)
 		queues["events"].Messages = messages
-		messagesCountBefore := len(messages)
+		assert.Len(t, queues["events"].Messages, messagesCount)
 
 		response, _ := setupQueueMessageConsumeTest(t, queues, "events", "2")
 
@@ -101,7 +103,7 @@ func TestHandleQueueMessageConsume(t *testing.T) {
 			assert.NotEmpty(t, message["id"])
 			assert.Equal(t, fmt.Sprintf("Message %d", i+1), message["payload"])
 		}
-		assert.Len(t, queues["events"].Messages, messagesCountBefore-2)
+		assert.Len(t, queues["events"].Messages, messagesCount-2)
 	})
 
 	t.Run("Returns all messages when limit=N and available messages < N", func(t *testing.T) {
@@ -112,19 +114,21 @@ func TestHandleQueueMessageConsume(t *testing.T) {
 			{Id: uuid.New(), Payload: "Message 4"},
 			{Id: uuid.New(), Payload: "Message 5"},
 		}
+		messagesCount := len(messages)
 		queues["events"].Messages = messages
+		assert.Len(t, queues["events"].Messages, messagesCount)
 
-		response, _ := setupQueueMessageConsumeTest(t, queues, "tmp", "200")
+		response, _ := setupQueueMessageConsumeTest(t, queues, "events", "200")
 
 		util.AssertOk(t, response)
 		var jsonResponse []map[string]interface{}
 		_ = json.Unmarshal([]byte(response.Body.String()), &jsonResponse)
-		assert.Len(t, jsonResponse, len(queues["tmp"].Messages))
+		assert.Len(t, jsonResponse, len(messages))
 		for i, message := range jsonResponse {
 			assert.NotEmpty(t, message["id"])
 			assert.Equal(t, fmt.Sprintf("Message %d", i+1), message["payload"])
 		}
-		assert.Len(t, queues["tmp"].Messages, 0)
+		assert.Len(t, queues["events"].Messages, 0)
 	})
 
 	t.Run("Returns not found when queue does not exist", func(t *testing.T) {
