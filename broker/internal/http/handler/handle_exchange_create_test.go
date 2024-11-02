@@ -48,7 +48,7 @@ func TestHandleExchangeCreate(t *testing.T) {
 		util.AssertCreated(t, response)
 		jsonResponse := util.JSONItemResponse(response)
 		assert.Equal(t, "app.tmp", jsonResponse["name"])
-		assert.Len(t, jsonResponse["bindings"], 0)
+		assert.Empty(t, jsonResponse["bindings"])
 	})
 
 	t.Run("Returns validation error when no exchange name supplied", func(t *testing.T) {

@@ -62,7 +62,7 @@ func TestHandleQueueMessagePeek(t *testing.T) {
 
 		util.AssertOk(t, response)
 		jsonResponse := util.JSONCollectionResponse(response)
-		assert.Len(t, jsonResponse, 0)
+		assert.Empty(t, jsonResponse)
 	})
 
 	t.Run("Returns one message when no limit supplied", func(t *testing.T) {

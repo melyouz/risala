@@ -42,9 +42,9 @@ func TestHandleExchangesFind(t *testing.T) {
 		jsonResponse := util.JSONCollectionResponse(response)
 		assert.Len(t, jsonResponse, 2)
 		assert.Equal(t, "app.external", jsonResponse[0]["name"])
-		assert.Len(t, jsonResponse[0]["bindings"], 0)
+		assert.Empty(t, jsonResponse[0]["bindings"])
 		assert.Equal(t, "app.internal", jsonResponse[1]["name"])
-		assert.Len(t, jsonResponse[1]["bindings"], 0)
+		assert.Empty(t, jsonResponse[1]["bindings"])
 	})
 
 	t.Run("Returns empty list when no exchanges", func(t *testing.T) {
@@ -55,6 +55,6 @@ func TestHandleExchangesFind(t *testing.T) {
 
 		util.AssertOk(t, response)
 		jsonResponse := util.JSONCollectionResponse(response)
-		assert.Len(t, jsonResponse, 0)
+		assert.Empty(t, jsonResponse)
 	})
 }

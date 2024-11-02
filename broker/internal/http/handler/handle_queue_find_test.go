@@ -55,6 +55,6 @@ func TestHandleQueueFind(t *testing.T) {
 
 		util.AssertOk(t, response)
 		jsonResponse := util.JSONCollectionResponse(response)
-		assert.Len(t, jsonResponse, 0)
+		assert.Empty(t, jsonResponse)
 	})
 }

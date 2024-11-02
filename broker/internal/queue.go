@@ -86,3 +86,12 @@ func (q *Queue) Peek(limit int) (messages []*Message, err errs.AppError) {
 
 	return result, nil
 }
+
+func (q *Queue) Purge() (err errs.AppError) {
+	q.Lock()
+	defer q.Unlock()
+
+	q.Messages = []*Message{}
+
+	return nil
+}

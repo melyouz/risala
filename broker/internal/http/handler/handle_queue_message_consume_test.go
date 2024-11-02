@@ -55,7 +55,7 @@ func TestHandleQueueMessageConsume(t *testing.T) {
 
 		util.AssertOk(t, response)
 		jsonResponse := util.JSONCollectionResponse(response)
-		assert.Len(t, jsonResponse, 0)
+		assert.Empty(t, jsonResponse)
 	})
 
 	t.Run("Returns one message when no limit supplied", func(t *testing.T) {
@@ -123,7 +123,7 @@ func TestHandleQueueMessageConsume(t *testing.T) {
 			assert.NotEmpty(t, message["id"])
 			assert.Equal(t, fmt.Sprintf("Message %d", i+1), message["payload"])
 		}
-		assert.Len(t, queues["events"].Messages, 0)
+		assert.Empty(t, queues["events"].Messages)
 	})
 
 	t.Run("Returns not found when queue does not exist", func(t *testing.T) {

@@ -51,7 +51,7 @@ func TestHandleExchangeGet(t *testing.T) {
 		util.AssertOk(t, response)
 		jsonResponse := util.JSONItemResponse(response)
 		assert.Equal(t, "app.external", jsonResponse["name"])
-		assert.Len(t, jsonResponse["bindings"], 0)
+		assert.Empty(t, jsonResponse["bindings"])
 	})
 
 	t.Run("Returns not found when exchange does not exist", func(t *testing.T) {
