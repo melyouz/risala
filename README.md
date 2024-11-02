@@ -15,7 +15,7 @@ gRPC based Message Broker written in Go for self learning purpose.
 * [x] ~~Publish messages to exchange.~~
 * [x] ~~Peek queue messages.~~
 * [x] ~~Consume & acknowledge queue messages.~~
-* [x] Purge queue messages.
+* [x] ~~Purge queue messages.~~
 * [ ] Dead Letter queue.
 
 #### Producer
