@@ -13,12 +13,12 @@ build:
 .PHONY: test
 test:
 	@echo "Testing..."
-	@go test ./... -v
+	@go test ./... -v -count=1
 
 .PHONY: race
 race:
 	@echo "Testing (-race)..."
-	@go test ./... -v -race
+	@go test ./... -v -race -count=1
 
 .PHONY: run
 run:
