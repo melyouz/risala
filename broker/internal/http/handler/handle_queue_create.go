@@ -6,6 +6,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -22,13 +23,20 @@ func HandleQueueCreate(queueRepository storage.QueueRepository, validate *valida
 		util.Decode(r, &queue)
 
 		var vErrors validator.ValidationErrors
-		if errors.As(validate.Struct(queue), &vErrors) {
+		if errors.As(validate.Struct(&queue), &vErrors) {
 			util.Respond(w, errs.NewValidationError(vErrors), http.StatusBadRequest)
+			return
+		}
+
+		existingQueue, _ := queueRepository.GetQueue(queue.Name)
+		if existingQueue != nil {
+			existsErr := errs.NewQueueExistsError(fmt.Sprintf("Queue '%s' already exists", queue.Name))
+			util.Respond(w, existsErr, util.HttpStatusCodeFromAppError(existsErr))
 			return
 		}
 
 		queueRepository.StoreQueue(&queue)
 
-		util.Respond(w, queue, http.StatusCreated)
+		util.Respond(w, &queue, http.StatusCreated)
 	}
 }

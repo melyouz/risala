@@ -6,13 +6,12 @@ package server
 
 import (
 	"net/http"
-	"reflect"
-	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 
+	"github.com/melyouz/risala/broker/internal/http/util"
 	"github.com/melyouz/risala/broker/internal/storage"
 )
 
@@ -33,7 +32,7 @@ func NewServer(
 	s := &Server{
 		listenAddr:         listenAddr,
 		router:             router,
-		validate:           NewJSONValidator(),
+		validate:           util.NewJSONValidator(),
 		queueRepository:    queuesRepository,
 		exchangeRepository: exchangesRepository,
 	}
@@ -52,18 +51,4 @@ func NewServer(
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.router.ServeHTTP(w, r)
-}
-
-func NewJSONValidator() *validator.Validate {
-	validate := validator.New(validator.WithRequiredStructEnabled())
-
-	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
-		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
-		if name == "-" {
-			return ""
-		}
-		return name
-	})
-
-	return validate
 }

@@ -15,6 +15,7 @@ var httpStatusCodes = map[string]int{
 	errs.ExchangeNotFoundErrorCode: http.StatusNotFound,
 	errs.ExchangeExistsErrorCode:   http.StatusConflict,
 	errs.QueueNotFoundErrorCode:    http.StatusNotFound,
+	errs.QueueExistsErrorCode:      http.StatusConflict,
 	errs.BindingNotFoundErrorCode:  http.StatusNotFound,
 	errs.BindingExistsErrorCode:    http.StatusConflict,
 	errs.ParamInvalidErrorCode:     http.StatusBadRequest,
