@@ -21,7 +21,7 @@ func (s *Server) RegisterRoutes() {
 	queuesRouter.Delete("/{queueName}", handler.HandleQueueDelete(s.queueRepository))
 	queuesRouter.Post("/{queueName}/messages/publish", handler.HandleQueueMessagePublish(s.queueRepository, s.validate))
 	queuesRouter.Get("/{queueName}/messages/peek", handler.HandleQueueMessagePeek(s.queueRepository))
-	//queuesRouter.Post("/{queueName}/messages/consume", handler.HandleQueueMessageConsume(s.queueRepository))
+	queuesRouter.Post("/{queueName}/messages/consume", handler.HandleQueueMessageConsume(s.queueRepository))
 
 	// exchanges
 	exchangesRouter := chi.NewRouter()

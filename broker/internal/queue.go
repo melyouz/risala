@@ -6,7 +6,10 @@ package internal
 
 import (
 	"fmt"
+	"slices"
 	"sync"
+
+	"github.com/google/uuid"
 
 	"github.com/melyouz/risala/broker/internal/errs"
 )
@@ -27,39 +30,54 @@ func (q *Queue) Enqueue(message *Message) (err errs.AppError) {
 	return nil
 }
 
-func (q *Queue) Dequeue() (message *Message, err errs.AppError) {
+func (q *Queue) Dequeue() (message *Message) {
 	q.Lock()
 	defer q.Unlock()
 
 	messagesCount := len(q.Messages)
 	if messagesCount == 0 {
-		return nil, errs.NewQueueEmptyError(fmt.Sprintf("Queue '%s' is empty", q.Name))
+		return nil
 	}
 
 	for _, m := range q.Messages {
 		if !m.IsAwaiting() {
 			m.Await()
-			return m, nil
+			return m
 		}
 	}
 
-	return nil, errs.NewMessageNotFoundError("No pending messages available")
+	return nil
+}
+
+func (q *Queue) Ack(messageId uuid.UUID) (err errs.AppError) {
+	q.Lock()
+	defer q.Unlock()
+
+	for i, m := range q.Messages {
+		if m.Id == messageId && m.IsAwaiting() {
+			q.Messages = slices.Delete(q.Messages, i, i+1)
+			return nil
+		}
+	}
+
+	return errs.NewMessageNotFoundError(fmt.Sprintf("Message '%s' not found", messageId.String()))
 }
 
 func (q *Queue) Peek(limit int) (messages []*Message, err errs.AppError) {
 	q.Lock()
 	defer q.Unlock()
 
+	result := make([]*Message, 0)
+
 	messagesCount := len(q.Messages)
 	if messagesCount == 0 {
-		return messages, nil
+		return result, nil
 	}
 
 	if limit > messagesCount {
 		limit = messagesCount
 	}
 
-	var result []*Message
 	for _, m := range q.Messages {
 		if !m.IsAwaiting() && len(result) < limit {
 			result = append(result, m)
