@@ -6,7 +6,7 @@ package errs
 
 const QueueNonDeletableErrorCode = "QUEUE_NON_DELETABLE"
 
-func NewCannotDeleteSystemQueueError(msg string) *Error {
+func NewQueueNonDeletableError(msg string) *Error {
 	return &Error{
 		Code:    QueueNonDeletableErrorCode,
 		Message: msg,

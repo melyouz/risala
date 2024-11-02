@@ -71,7 +71,7 @@ func (r *InMemoryQueueRepository) DeleteQueue(name string) (err errs.AppError) {
 	}
 
 	if queue.IsSystem() {
-		return errs.NewCannotDeleteSystemQueueError(fmt.Sprintf("Cannot delete system Queue '%s'", name))
+		return errs.NewQueueNonDeletableError(fmt.Sprintf("Cannot delete system Queue '%s'", name))
 	}
 
 	delete(r.QueueList, name)
