@@ -37,11 +37,7 @@ func HandleQueueMessageConsume(queueRepository storage.QueueRepository) http.Han
 				break
 			}
 
-			ackErr := queue.Ack(message.Id)
-			if ackErr != nil {
-				util.Respond(w, ackErr, util.HttpStatusCodeFromAppError(ackErr))
-				return
-			}
+			_ = queue.Ack(message.Id)
 
 			result = append(result, message)
 		}
