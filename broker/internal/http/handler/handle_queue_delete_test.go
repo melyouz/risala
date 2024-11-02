@@ -36,7 +36,6 @@ func setupQueueDeleteTest(t *testing.T, queues map[string]*internal.Queue, excha
 }
 
 func TestHandleQueueDelete(t *testing.T) {
-	t.Parallel()
 
 	queues := map[string]*internal.Queue{
 		"events": util.NewNewQueueDurableWithoutMessages("events"),
@@ -44,7 +43,6 @@ func TestHandleQueueDelete(t *testing.T) {
 	}
 
 	t.Run("Returns accepted when queue exists", func(t *testing.T) {
-		t.Parallel()
 
 		response, _ := setupQueueDeleteTest(t, queues, "events")
 
@@ -52,7 +50,6 @@ func TestHandleQueueDelete(t *testing.T) {
 	})
 
 	t.Run("Returns not found when queue does not exist", func(t *testing.T) {
-		t.Parallel()
 
 		response, _ := setupQueueDeleteTest(t, queues, "nonExistingQueueName")
 

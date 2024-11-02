@@ -16,8 +16,7 @@ import (
 
 func HandleQueueMessagePeek(queueRepository storage.QueueRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		limitParamName := "limit"
-		limit, _ := strconv.Atoi(r.URL.Query().Get(limitParamName))
+		limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 		if limit < 1 {
 			limit = 1
 		}

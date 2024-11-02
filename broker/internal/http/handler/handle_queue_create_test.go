@@ -34,9 +34,7 @@ func setupQueueCreateTest(t *testing.T, queues map[string]*internal.Queue, body 
 }
 
 func TestHandleQueueCreate(t *testing.T) {
-	t.Parallel()
 	t.Run("Creates durable queue when validations pass", func(t *testing.T) {
-		t.Parallel()
 
 		queues := map[string]*internal.Queue{}
 		queueBody := map[string]interface{}{
@@ -53,7 +51,6 @@ func TestHandleQueueCreate(t *testing.T) {
 	})
 
 	t.Run("Creates transient queue when validations pass", func(t *testing.T) {
-		t.Parallel()
 
 		queues := map[string]*internal.Queue{}
 		queueBody := map[string]interface{}{
@@ -70,7 +67,6 @@ func TestHandleQueueCreate(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when unknown queue durability", func(t *testing.T) {
-		t.Parallel()
 
 		queues := map[string]*internal.Queue{}
 		queueBody := map[string]interface{}{
@@ -86,7 +82,6 @@ func TestHandleQueueCreate(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when no queue name supplied", func(t *testing.T) {
-		t.Parallel()
 
 		queues := map[string]*internal.Queue{}
 		queueBody := map[string]interface{}{
@@ -101,7 +96,6 @@ func TestHandleQueueCreate(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when no queue durability supplied", func(t *testing.T) {
-		t.Parallel()
 
 		queues := map[string]*internal.Queue{}
 		queueBody := map[string]interface{}{
@@ -116,7 +110,6 @@ func TestHandleQueueCreate(t *testing.T) {
 	})
 
 	t.Run("Returns validation errors when no queue name nor durability supplied", func(t *testing.T) {
-		t.Parallel()
 
 		queues := map[string]*internal.Queue{}
 		queueBody := map[string]interface{}{
@@ -132,7 +125,6 @@ func TestHandleQueueCreate(t *testing.T) {
 	})
 
 	t.Run("Returns conflict error when queue already exists", func(t *testing.T) {
-		t.Parallel()
 
 		queues := map[string]*internal.Queue{
 			"events": util.NewNewQueueDurableWithoutMessages("events"),

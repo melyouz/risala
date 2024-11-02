@@ -38,7 +38,6 @@ func setupExchangeGetTest(t *testing.T, exchanges map[string]*internal.Exchange,
 }
 
 func TestHandleExchangeGet(t *testing.T) {
-	t.Parallel()
 
 	exchanges := map[string]*internal.Exchange{
 		"app.internal": util.NewTestExchangeWithoutBindings("app.internal"),
@@ -46,7 +45,6 @@ func TestHandleExchangeGet(t *testing.T) {
 	}
 
 	t.Run("Returns exchange when exists", func(t *testing.T) {
-		t.Parallel()
 
 		response, _ := setupExchangeGetTest(t, exchanges, "app.external")
 
@@ -57,7 +55,6 @@ func TestHandleExchangeGet(t *testing.T) {
 	})
 
 	t.Run("Returns not found when exchange does not exist", func(t *testing.T) {
-		t.Parallel()
 
 		response, _ := setupExchangeGetTest(t, exchanges, "nonExistingExchangeName")
 

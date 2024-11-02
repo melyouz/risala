@@ -40,7 +40,6 @@ func setupExchangeBindingDeleteTest(t *testing.T, exchanges map[string]*internal
 }
 
 func TestHandleExchangeBindingDelete(t *testing.T) {
-	t.Parallel()
 
 	exchanges := map[string]*internal.Exchange{
 		"app.internal": util.NewTestExchangeWithBindings("app.internal", []*internal.Binding{
@@ -50,7 +49,6 @@ func TestHandleExchangeBindingDelete(t *testing.T) {
 	}
 
 	t.Run("Deletes binding when validations pass", func(t *testing.T) {
-		t.Parallel()
 
 		response, _ := setupExchangeBindingDeleteTest(t, exchanges, "app.internal", exchanges["app.internal"].Bindings[0].Id.String())
 
@@ -58,7 +56,6 @@ func TestHandleExchangeBindingDelete(t *testing.T) {
 	})
 
 	t.Run("Returns not found error when exchange does not exist", func(t *testing.T) {
-		t.Parallel()
 
 		response, _ := setupExchangeBindingDeleteTest(t, exchanges, "nonExistingExchangeName", uuid.New().String())
 
@@ -66,7 +63,6 @@ func TestHandleExchangeBindingDelete(t *testing.T) {
 	})
 
 	t.Run("Returns not found error when binding does not exist", func(t *testing.T) {
-		t.Parallel()
 
 		nonExistingBindingId := uuid.New().String()
 
@@ -76,7 +72,6 @@ func TestHandleExchangeBindingDelete(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when wrong binding id format supplied", func(t *testing.T) {
-		t.Parallel()
 
 		wrongBindingId := "123"
 

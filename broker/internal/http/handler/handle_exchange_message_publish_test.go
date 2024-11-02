@@ -44,7 +44,6 @@ func setupExchangeMessagePublishTest(t *testing.T, queues map[string]*internal.Q
 }
 
 func TestHandleExchangeMessagePublish(t *testing.T) {
-	t.Parallel()
 
 	exchanges := map[string]*internal.Exchange{
 		"app.internal": util.NewTestExchangeWithBindings("app.internal", []*internal.Binding{
@@ -58,7 +57,6 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 	}
 
 	t.Run("Publishes message when validations pass & queue binding exists", func(t *testing.T) {
-		t.Parallel()
 
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": "Hello world!",
@@ -73,7 +71,6 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when no message payload supplied", func(t *testing.T) {
-		t.Parallel()
 
 		messageBody, _ := json.Marshal(map[string]interface{}{})
 
@@ -85,7 +82,6 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when message payload is empty", func(t *testing.T) {
-		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": "",
 		})
@@ -98,7 +94,6 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when message payload is nil", func(t *testing.T) {
-		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": nil,
 		})
@@ -111,7 +106,6 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 	})
 
 	t.Run("Returns not found when exchange does not exist", func(t *testing.T) {
-		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": "Hello world!",
 		})

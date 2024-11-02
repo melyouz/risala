@@ -29,9 +29,7 @@ func setupQueueFindTest(t *testing.T, queues map[string]*internal.Queue) (*httpt
 }
 
 func TestHandleQueueFind(t *testing.T) {
-	t.Parallel()
 	t.Run("Returns list when queues exist", func(t *testing.T) {
-		t.Parallel()
 
 		queues := map[string]*internal.Queue{
 			"events": util.NewNewQueueDurableWithoutMessages("events"),
@@ -50,7 +48,6 @@ func TestHandleQueueFind(t *testing.T) {
 	})
 
 	t.Run("Returns empty list when no queues", func(t *testing.T) {
-		t.Parallel()
 
 		queues := map[string]*internal.Queue{}
 

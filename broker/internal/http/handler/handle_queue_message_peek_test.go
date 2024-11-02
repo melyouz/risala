@@ -44,7 +44,6 @@ func setupQueueMessagePeekTest(t *testing.T, queues map[string]*internal.Queue, 
 }
 
 func TestHandleQueueMessagePeek(t *testing.T) {
-	t.Parallel()
 
 	queues := map[string]*internal.Queue{
 		"events": util.NewNewQueueDurableWithoutMessages("events"),
@@ -58,7 +57,6 @@ func TestHandleQueueMessagePeek(t *testing.T) {
 	}
 
 	t.Run("Returns empty list when no messages", func(t *testing.T) {
-		t.Parallel()
 
 		response, _ := setupQueueMessagePeekTest(t, queues, "events", "10")
 
@@ -68,21 +66,20 @@ func TestHandleQueueMessagePeek(t *testing.T) {
 	})
 
 	t.Run("Returns one message when no limit supplied", func(t *testing.T) {
-		t.Parallel()
-
+		messagesCountBefore := len(queues["tmp"].Messages)
 		response, _ := setupQueueMessagePeekTest(t, queues, "tmp", "1")
 
 		util.AssertOk(t, response)
 		var jsonResponse []map[string]interface{}
 		_ = json.Unmarshal([]byte(response.Body.String()), &jsonResponse)
 		assert.Len(t, jsonResponse, 1)
-		//assert.NotEmpty(t, jsonResponse[0]["id"])
-		//assert.Equal(t, "Message 1", jsonResponse[0]["payload"])
+		assert.NotEmpty(t, jsonResponse[0]["id"])
+		assert.Equal(t, "Message 1", jsonResponse[0]["payload"])
+		assert.Len(t, queues["tmp"].Messages, messagesCountBefore)
 	})
 
 	t.Run("Returns N messages when limit=N and available messages > N", func(t *testing.T) {
-		t.Parallel()
-
+		messagesCountBefore := len(queues["tmp"].Messages)
 		response, _ := setupQueueMessagePeekTest(t, queues, "tmp", "2")
 
 		util.AssertOk(t, response)
@@ -93,11 +90,11 @@ func TestHandleQueueMessagePeek(t *testing.T) {
 			assert.NotEmpty(t, message["id"])
 			assert.Equal(t, fmt.Sprintf("Message %d", i+1), message["payload"])
 		}
+		assert.Len(t, queues["tmp"].Messages, messagesCountBefore)
 	})
 
 	t.Run("Returns all messages when limit=N and available messages < N", func(t *testing.T) {
-		t.Parallel()
-
+		messagesCountBefore := len(queues["tmp"].Messages)
 		response, _ := setupQueueMessagePeekTest(t, queues, "tmp", "200")
 
 		util.AssertOk(t, response)
@@ -108,10 +105,10 @@ func TestHandleQueueMessagePeek(t *testing.T) {
 			assert.NotEmpty(t, message["id"])
 			assert.Equal(t, fmt.Sprintf("Message %d", i+1), message["payload"])
 		}
+		assert.Len(t, queues["tmp"].Messages, messagesCountBefore)
 	})
 
 	t.Run("Returns not found when queue does not exist", func(t *testing.T) {
-		t.Parallel()
 
 		response, _ := setupQueueMessagePeekTest(t, queues, "nonExistingQueueName", "200")
 

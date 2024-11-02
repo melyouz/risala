@@ -29,9 +29,7 @@ func setupExchangeFindTest(t *testing.T, exchanges map[string]*internal.Exchange
 }
 
 func TestHandleExchangesFind(t *testing.T) {
-	t.Parallel()
 	t.Run("Returns list when exchanges exist", func(t *testing.T) {
-		t.Parallel()
 
 		exchanges := map[string]*internal.Exchange{
 			"app.internal": util.NewTestExchangeWithoutBindings("app.internal"),
@@ -50,7 +48,6 @@ func TestHandleExchangesFind(t *testing.T) {
 	})
 
 	t.Run("Returns empty list when no exchanges", func(t *testing.T) {
-		t.Parallel()
 
 		exchanges := map[string]*internal.Exchange{}
 

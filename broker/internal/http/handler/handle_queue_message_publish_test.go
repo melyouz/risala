@@ -42,7 +42,6 @@ func setupQueueMessagePublishTest(t *testing.T, queues map[string]*internal.Queu
 }
 
 func TestHandleQueueMessagePublish(t *testing.T) {
-	t.Parallel()
 
 	queues := map[string]*internal.Queue{
 		"events": util.NewNewQueueDurableWithoutMessages("events"),
@@ -50,7 +49,6 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 	}
 
 	t.Run("Publishes message when validations pass", func(t *testing.T) {
-		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": "Hello world!",
 		})
@@ -62,7 +60,6 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when no message payload supplied", func(t *testing.T) {
-		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{})
 
 		response, _ := setupQueueMessagePublishTest(t, queues, "tmp", messageBody)
@@ -73,7 +70,6 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when message payload is empty", func(t *testing.T) {
-		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": "",
 		})
@@ -86,7 +82,6 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when message payload is nil", func(t *testing.T) {
-		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": nil,
 		})
@@ -99,7 +94,6 @@ func TestHandleQueueMessagePublish(t *testing.T) {
 	})
 
 	t.Run("Returns not found when queue does not exist", func(t *testing.T) {
-		t.Parallel()
 		messageBody, _ := json.Marshal(map[string]interface{}{
 			"payload": "Hello world!",
 		})

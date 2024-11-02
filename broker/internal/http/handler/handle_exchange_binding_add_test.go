@@ -44,7 +44,6 @@ func setupExchangeBindingAddTest(t *testing.T, queues map[string]*internal.Queue
 }
 
 func TestHandleExchangeBindingAdd(t *testing.T) {
-	t.Parallel()
 
 	exchanges := map[string]*internal.Exchange{
 		"app.internal": util.NewTestExchangeWithBindings("app.internal", []*internal.Binding{
@@ -58,7 +57,6 @@ func TestHandleExchangeBindingAdd(t *testing.T) {
 	}
 
 	t.Run("Adds binding when validations pass", func(t *testing.T) {
-		t.Parallel()
 		bindingBody, _ := json.Marshal(map[string]interface{}{
 			"queue":      "events",
 			"routingKey": "#",
@@ -74,7 +72,6 @@ func TestHandleExchangeBindingAdd(t *testing.T) {
 	})
 
 	t.Run("Returns not found error when exchange does not exist", func(t *testing.T) {
-		t.Parallel()
 		bindingBody, _ := json.Marshal(map[string]interface{}{
 			"queue":      "events",
 			"routingKey": "#",
@@ -86,7 +83,6 @@ func TestHandleExchangeBindingAdd(t *testing.T) {
 	})
 
 	t.Run("Returns not found error when queue does not exist", func(t *testing.T) {
-		t.Parallel()
 
 		bindingBody, _ := json.Marshal(map[string]interface{}{
 			"queue":      "nonExistingQueueName",
@@ -99,7 +95,6 @@ func TestHandleExchangeBindingAdd(t *testing.T) {
 	})
 
 	t.Run("Returns conflict error when binding already exists", func(t *testing.T) {
-		t.Parallel()
 
 		bindingBody, _ := json.Marshal(map[string]interface{}{
 			"queue":      "tmp",
@@ -112,7 +107,6 @@ func TestHandleExchangeBindingAdd(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when no queue name supplied", func(t *testing.T) {
-		t.Parallel()
 
 		bindingBody, _ := json.Marshal(map[string]interface{}{
 			"routingKey": "#",

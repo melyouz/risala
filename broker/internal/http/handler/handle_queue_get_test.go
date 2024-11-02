@@ -38,7 +38,6 @@ func setupQueueGetTest(t *testing.T, queues map[string]*internal.Queue, queueNam
 }
 
 func TestHandleQueueGet(t *testing.T) {
-	t.Parallel()
 
 	queues := map[string]*internal.Queue{
 		"events": util.NewNewQueueDurableWithoutMessages("events"),
@@ -46,7 +45,6 @@ func TestHandleQueueGet(t *testing.T) {
 	}
 
 	t.Run("Returns queue when exists", func(t *testing.T) {
-		t.Parallel()
 
 		response, _ := setupQueueGetTest(t, queues, "events")
 
@@ -57,7 +55,6 @@ func TestHandleQueueGet(t *testing.T) {
 	})
 
 	t.Run("Returns not found when queue does not exist", func(t *testing.T) {
-		t.Parallel()
 
 		response, _ := setupQueueGetTest(t, queues, "nonExistingQueueName")
 

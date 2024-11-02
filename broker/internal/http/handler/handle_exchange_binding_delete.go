@@ -17,10 +17,10 @@ import (
 
 func HandleExchangeBindingDelete(exchangeRepository storage.ExchangeRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		bindingIdParam := "bindingId"
-		bindingId, uuidErr := uuid.Parse(chi.URLParam(r, bindingIdParam))
+		bindingIdParamName := "bindingId"
+		bindingId, uuidErr := uuid.Parse(chi.URLParam(r, bindingIdParamName))
 		if uuidErr != nil {
-			paramErr := errs.NewParamInvalidError(bindingIdParam, uuidErr.Error())
+			paramErr := errs.NewParamInvalidError(bindingIdParamName, uuidErr.Error())
 			util.Respond(w, paramErr, util.HttpStatusCodeFromAppError(paramErr))
 			return
 		}

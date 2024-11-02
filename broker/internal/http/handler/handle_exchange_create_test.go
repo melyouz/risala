@@ -34,9 +34,7 @@ func setupExchangeCreateTest(t *testing.T, exchanges map[string]*internal.Exchan
 }
 
 func TestHandleExchangeCreate(t *testing.T) {
-	t.Parallel()
 	t.Run("Creates exchange when validations pass", func(t *testing.T) {
-		t.Parallel()
 		exchanges := map[string]*internal.Exchange{
 			"app.internal": util.NewTestExchangeWithoutBindings("app.internal"),
 			"app.external": util.NewTestExchangeWithoutBindings("app.external"),
@@ -54,7 +52,6 @@ func TestHandleExchangeCreate(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when no exchange name supplied", func(t *testing.T) {
-		t.Parallel()
 
 		exchanges := map[string]*internal.Exchange{}
 		exchangeBody := map[string]interface{}{}
@@ -67,7 +64,6 @@ func TestHandleExchangeCreate(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when exchange name is empty", func(t *testing.T) {
-		t.Parallel()
 
 		exchanges := map[string]*internal.Exchange{}
 		exchangeBody := map[string]interface{}{
@@ -82,7 +78,6 @@ func TestHandleExchangeCreate(t *testing.T) {
 	})
 
 	t.Run("Returns validation error when exchange name is nil", func(t *testing.T) {
-		t.Parallel()
 
 		exchanges := map[string]*internal.Exchange{}
 		exchangeBody := map[string]interface{}{
@@ -97,7 +92,6 @@ func TestHandleExchangeCreate(t *testing.T) {
 	})
 
 	t.Run("Returns conflict error when exchange already exists", func(t *testing.T) {
-		t.Parallel()
 
 		exchanges := map[string]*internal.Exchange{
 			"app.internal": util.NewTestExchangeWithoutBindings("app.internal"),

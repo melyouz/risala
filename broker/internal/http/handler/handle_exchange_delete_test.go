@@ -36,24 +36,18 @@ func setupExchangeDeleteTest(t *testing.T, exchanges map[string]*internal.Exchan
 }
 
 func TestHandleExchangeDelete(t *testing.T) {
-	t.Parallel()
-
 	exchanges := map[string]*internal.Exchange{
 		"app.internal": util.NewTestExchangeWithoutBindings("app.internal"),
 		"app.external": util.NewTestExchangeWithoutBindings("app.external"),
 	}
 
 	t.Run("Returns accepted when exchange exists", func(t *testing.T) {
-		t.Parallel()
-
 		response, _ := setupExchangeDeleteTest(t, exchanges, "app.external")
 
 		util.AssertAccepted(t, response)
 	})
 
 	t.Run("Returns not found when exchange does not exist", func(t *testing.T) {
-		t.Parallel()
-
 		response, _ := setupExchangeDeleteTest(t, exchanges, "nonExistingExchangeName")
 
 		util.AssertNotFound(t, response, "EXCHANGE_NOT_FOUND", "Exchange 'nonExistingExchangeName' not found")
