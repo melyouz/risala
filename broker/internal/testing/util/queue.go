@@ -8,7 +8,7 @@ import (
 	"github.com/melyouz/risala/broker/internal"
 )
 
-func NewNewQueueDurableWithoutMessages(name string) (queue *internal.Queue) {
+func NewTestQueueDurableWithoutMessages(name string) (queue *internal.Queue) {
 	return &internal.Queue{
 		Name:       name,
 		Durability: internal.Durability.DURABLE,
@@ -16,7 +16,7 @@ func NewNewQueueDurableWithoutMessages(name string) (queue *internal.Queue) {
 	}
 }
 
-func NewQueueTransientWithoutMessages(name string) (queue *internal.Queue) {
+func NewTestQueueTransientWithoutMessages(name string) (queue *internal.Queue) {
 	return &internal.Queue{
 		Name:       name,
 		Durability: internal.Durability.TRANSIENT,
@@ -24,10 +24,19 @@ func NewQueueTransientWithoutMessages(name string) (queue *internal.Queue) {
 	}
 }
 
-func NewQueueTransientWithMessages(name string, messages []*internal.Message) (queue *internal.Queue) {
+func NewTestQueueTransientWithMessages(name string, messages []*internal.Message) (queue *internal.Queue) {
 	return &internal.Queue{
 		Name:       name,
 		Durability: internal.Durability.TRANSIENT,
 		Messages:   messages,
+	}
+}
+
+func NewTestSystemQueueWithoutMessages(name string) (queue *internal.Queue) {
+	return &internal.Queue{
+		Name:       name,
+		Durability: internal.Durability.DURABLE,
+		Messages:   []*internal.Message{},
+		System:     true,
 	}
 }

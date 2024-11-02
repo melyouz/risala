@@ -40,8 +40,8 @@ func setupQueueGetTest(t *testing.T, queues map[string]*internal.Queue, queueNam
 func TestHandleQueueGet(t *testing.T) {
 
 	queues := map[string]*internal.Queue{
-		"events": util.NewNewQueueDurableWithoutMessages("events"),
-		"tmp":    util.NewQueueTransientWithoutMessages("tmp"),
+		"events": util.NewTestQueueDurableWithoutMessages("events"),
+		"tmp":    util.NewTestQueueTransientWithoutMessages("tmp"),
 	}
 
 	t.Run("Returns queue when exists", func(t *testing.T) {

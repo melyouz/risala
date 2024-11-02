@@ -65,9 +65,13 @@ func (r *InMemoryQueueRepository) DeleteQueue(name string) (err errs.AppError) {
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
-	_, ok := r.QueueList[name]
+	queue, ok := r.QueueList[name]
 	if !ok {
 		return errs.NewQueueNotFoundError(fmt.Sprintf("Queue '%s' not found", name))
+	}
+
+	if queue.IsSystem() {
+		return errs.NewCannotDeleteSystemQueueError(fmt.Sprintf("Cannot delete system Queue '%s'", name))
 	}
 
 	delete(r.QueueList, name)

@@ -32,8 +32,8 @@ func TestHandleQueueFind(t *testing.T) {
 	t.Run("Returns list when queues exist", func(t *testing.T) {
 
 		queues := map[string]*internal.Queue{
-			"events": util.NewNewQueueDurableWithoutMessages("events"),
-			"tmp":    util.NewQueueTransientWithoutMessages("tmp"),
+			"events": util.NewTestQueueDurableWithoutMessages("events"),
+			"tmp":    util.NewTestQueueTransientWithoutMessages("tmp"),
 		}
 
 		response, _ := setupQueueFindTest(t, queues)

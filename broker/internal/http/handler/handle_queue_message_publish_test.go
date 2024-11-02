@@ -44,8 +44,8 @@ func setupQueueMessagePublishTest(t *testing.T, queues map[string]*internal.Queu
 func TestHandleQueueMessagePublish(t *testing.T) {
 
 	queues := map[string]*internal.Queue{
-		"events": util.NewNewQueueDurableWithoutMessages("events"),
-		"tmp":    util.NewQueueTransientWithoutMessages("tmp"),
+		"events": util.NewTestQueueDurableWithoutMessages("events"),
+		"tmp":    util.NewTestQueueTransientWithoutMessages("tmp"),
 	}
 
 	t.Run("Publishes message when validations pass", func(t *testing.T) {

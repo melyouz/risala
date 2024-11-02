@@ -52,8 +52,8 @@ func TestHandleExchangeBindingAdd(t *testing.T) {
 		"app.external": util.NewTestExchangeWithoutBindings("app.external"),
 	}
 	queues := map[string]*internal.Queue{
-		"events": util.NewNewQueueDurableWithoutMessages("events"),
-		"tmp":    util.NewQueueTransientWithoutMessages("tmp"),
+		"events": util.NewTestQueueDurableWithoutMessages("events"),
+		"tmp":    util.NewTestQueueTransientWithoutMessages("tmp"),
 	}
 
 	t.Run("Adds binding when validations pass", func(t *testing.T) {

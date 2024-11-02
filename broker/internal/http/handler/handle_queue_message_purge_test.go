@@ -41,8 +41,8 @@ func setupQueueMessagePurgeTest(t *testing.T, queues map[string]*internal.Queue,
 func TestHandleQueueMessagePurge(t *testing.T) {
 
 	queues := map[string]*internal.Queue{
-		"events": util.NewNewQueueDurableWithoutMessages("events"),
-		"tmp":    util.NewQueueTransientWithoutMessages("tmp"),
+		"events": util.NewTestQueueDurableWithoutMessages("events"),
+		"tmp":    util.NewTestQueueTransientWithoutMessages("tmp"),
 	}
 
 	t.Run("Returns accepted on success", func(t *testing.T) {

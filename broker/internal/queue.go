@@ -19,6 +19,7 @@ type Queue struct {
 	Name       string         `json:"name" validate:"required"`
 	Durability DurabilityType `json:"durability" validate:"required,oneof=durable transient"`
 	Messages   []*Message     `json:"-" validate:"dive"`
+	System     bool           `json:"isSystem"`
 }
 
 func (q *Queue) Enqueue(message *Message) (err errs.AppError) {
@@ -94,4 +95,8 @@ func (q *Queue) Purge() (err errs.AppError) {
 	q.Messages = []*Message{}
 
 	return nil
+}
+
+func (q *Queue) IsSystem() bool {
+	return q.System
 }

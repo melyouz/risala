@@ -20,18 +20,32 @@ var Exchanges = map[string]*internal.Exchange{
 }
 
 var Queues = map[string]*internal.Queue{
-	"events": {Name: "events", Durability: internal.Durability.DURABLE, Messages: []*internal.Message{
-		{Id: uuid.New(), Payload: "Message 1 (events)"},
-		{Id: uuid.New(), Payload: "Message 2 (events)"},
-		{Id: uuid.New(), Payload: "Message 3 (events)"},
-		{Id: uuid.New(), Payload: "Message 4 (events)"},
-		{Id: uuid.New(), Payload: "Message 5 (events)"},
-	}},
-	"tmp": {Name: "tmp", Durability: internal.Durability.TRANSIENT, Messages: []*internal.Message{
-		{Id: uuid.New(), Payload: "Message 1 (tmp)"},
-		{Id: uuid.New(), Payload: "Message 2 (tmp)"},
-		{Id: uuid.New(), Payload: "Message 3 (tmp)"},
-		{Id: uuid.New(), Payload: "Message 4 (tmp)"},
-		{Id: uuid.New(), Payload: "Message 5 (tmp)"},
-	}},
+	"events": {
+		Name:       "events",
+		Durability: internal.Durability.DURABLE,
+		Messages: []*internal.Message{
+			{Id: uuid.New(), Payload: "Message 1 (events)"},
+			{Id: uuid.New(), Payload: "Message 2 (events)"},
+			{Id: uuid.New(), Payload: "Message 3 (events)"},
+			{Id: uuid.New(), Payload: "Message 4 (events)"},
+			{Id: uuid.New(), Payload: "Message 5 (events)"},
+		},
+	},
+	"tmp": {
+		Name:       "tmp",
+		Durability: internal.Durability.TRANSIENT,
+		Messages: []*internal.Message{
+			{Id: uuid.New(), Payload: "Message 1 (tmp)"},
+			{Id: uuid.New(), Payload: "Message 2 (tmp)"},
+			{Id: uuid.New(), Payload: "Message 3 (tmp)"},
+			{Id: uuid.New(), Payload: "Message 4 (tmp)"},
+			{Id: uuid.New(), Payload: "Message 5 (tmp)"},
+		},
+	},
+	"system.dead-letter": {
+		Name:       "system.dead-letter",
+		Durability: internal.Durability.DURABLE,
+		System:     true,
+		Messages:   []*internal.Message{},
+	},
 }

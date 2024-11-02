@@ -127,8 +127,8 @@ func TestHandleQueueCreate(t *testing.T) {
 	t.Run("Returns conflict error when queue already exists", func(t *testing.T) {
 
 		queues := map[string]*internal.Queue{
-			"events": util.NewNewQueueDurableWithoutMessages("events"),
-			"tmp":    util.NewQueueTransientWithoutMessages("tmp"),
+			"events": util.NewTestQueueDurableWithoutMessages("events"),
+			"tmp":    util.NewTestQueueTransientWithoutMessages("tmp"),
 		}
 		queueBody := map[string]interface{}{
 			"name":       "events",

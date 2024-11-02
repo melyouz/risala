@@ -46,8 +46,8 @@ func setupQueueMessagePeekTest(t *testing.T, queues map[string]*internal.Queue, 
 func TestHandleQueueMessagePeek(t *testing.T) {
 
 	queues := map[string]*internal.Queue{
-		"events": util.NewNewQueueDurableWithoutMessages("events"),
-		"tmp": util.NewQueueTransientWithMessages("tmp", []*internal.Message{
+		"events": util.NewTestQueueDurableWithoutMessages("events"),
+		"tmp": util.NewTestQueueTransientWithMessages("tmp", []*internal.Message{
 			{Id: uuid.New(), Payload: "Message 1"},
 			{Id: uuid.New(), Payload: "Message 2"},
 			{Id: uuid.New(), Payload: "Message 3"},

@@ -46,8 +46,8 @@ func setupQueueMessageConsumeTest(t *testing.T, queues map[string]*internal.Queu
 func TestHandleQueueMessageConsume(t *testing.T) {
 
 	queues := map[string]*internal.Queue{
-		"events": util.NewNewQueueDurableWithoutMessages("events"),
-		"tmp":    util.NewQueueTransientWithoutMessages("tmp"),
+		"events": util.NewTestQueueDurableWithoutMessages("events"),
+		"tmp":    util.NewTestQueueTransientWithoutMessages("tmp"),
 	}
 
 	t.Run("Returns empty list when no messages", func(t *testing.T) {
