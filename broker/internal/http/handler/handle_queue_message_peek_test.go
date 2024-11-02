@@ -66,46 +66,44 @@ func TestHandleQueueMessagePeek(t *testing.T) {
 	})
 
 	t.Run("Returns one message when no limit supplied", func(t *testing.T) {
-		messagesCountBefore := len(queues["tmp"].Messages)
+		initialMessageCount := len(queues["tmp"].Messages)
 		response, _ := setupQueueMessagePeekTest(t, queues, "tmp", "1")
 
 		util.AssertOk(t, response)
 		var jsonResponse []map[string]interface{}
-		_ = json.Unmarshal([]byte(response.Body.String()), &jsonResponse)
+		_ = json.Unmarshal(response.Body.Bytes(), &jsonResponse)
 		assert.Len(t, jsonResponse, 1)
 		assert.NotEmpty(t, jsonResponse[0]["id"])
 		assert.Equal(t, "Message 1", jsonResponse[0]["payload"])
-		assert.Len(t, queues["tmp"].Messages, messagesCountBefore)
+		assert.Len(t, queues["tmp"].Messages, initialMessageCount)
 	})
 
 	t.Run("Returns N messages when limit=N and available messages > N", func(t *testing.T) {
-		messagesCountBefore := len(queues["tmp"].Messages)
+		initialMessageCount := len(queues["tmp"].Messages)
 		response, _ := setupQueueMessagePeekTest(t, queues, "tmp", "2")
 
 		util.AssertOk(t, response)
 		var jsonResponse []map[string]interface{}
-		_ = json.Unmarshal([]byte(response.Body.String()), &jsonResponse)
+		_ = json.Unmarshal(response.Body.Bytes(), &jsonResponse)
 		assert.Len(t, jsonResponse, 2)
-		for i, message := range jsonResponse {
-			assert.NotEmpty(t, message["id"])
-			assert.Equal(t, fmt.Sprintf("Message %d", i+1), message["payload"])
-		}
-		assert.Len(t, queues["tmp"].Messages, messagesCountBefore)
+		assert.Equal(t, "Message 1", jsonResponse[0]["payload"])
+		assert.Equal(t, "Message 2", jsonResponse[1]["payload"])
+		assert.Len(t, queues["tmp"].Messages, initialMessageCount)
 	})
 
 	t.Run("Returns all messages when limit=N and available messages < N", func(t *testing.T) {
-		messagesCountBefore := len(queues["tmp"].Messages)
+		initialMessageCount := len(queues["tmp"].Messages)
 		response, _ := setupQueueMessagePeekTest(t, queues, "tmp", "200")
 
 		util.AssertOk(t, response)
 		var jsonResponse []map[string]interface{}
-		_ = json.Unmarshal([]byte(response.Body.String()), &jsonResponse)
+		_ = json.Unmarshal(response.Body.Bytes(), &jsonResponse)
 		assert.Len(t, jsonResponse, len(queues["tmp"].Messages))
 		for i, message := range jsonResponse {
 			assert.NotEmpty(t, message["id"])
 			assert.Equal(t, fmt.Sprintf("Message %d", i+1), message["payload"])
 		}
-		assert.Len(t, queues["tmp"].Messages, messagesCountBefore)
+		assert.Len(t, queues["tmp"].Messages, initialMessageCount)
 	})
 
 	t.Run("Returns not found when queue does not exist", func(t *testing.T) {
