@@ -8,10 +8,13 @@ gRPC based Message Broker written in Go for self learning purpose.
 
 #### Broker
 
-* [x] ~~Manage exchanges (fanout), queues (transient) & bindings (to queue).~~
-* [x] ~~Publish messages.~~
-* [x] ~~Peek messages.~~
-* [x] ~~Consume & acknowledge messages.~~
+* [x] ~~Manage Exchanges (create, list, get, delete).~~
+* [x] ~~Manage Queues (create, list, get, delete).~~
+* [x] ~~Manage Bindings (create, delete).~~
+* [x] ~~Publish messages to queue.~~
+* [x] ~~Publish messages to exchange.~~
+* [x] ~~Peek queue messages.~~
+* [x] ~~Consume & acknowledge queue messages.~~
 * [ ] Purge queue messages.
 * [ ] Dead Letter queue.
 
