@@ -21,9 +21,9 @@ gRPC based Message Broker written in Go for self learning purpose.
     * ~~Acknowledge (ack) a message.~~
     * ~~Negatively acknowledge (nack) a message.~~
   + Consumer
-    * Consume messages (HTTP API).
-    * Acknowledge messages (HTTP API).
-    * Negatively acknowledge messages (HTTP API).
+    * ~~Consume messages (HTTP API).~~
+    * ~~Acknowledge messages (HTTP API).~~
+    * ~~Negatively acknowledge messages (HTTP API).~~
   + Producer
     * Publish message (HTTP API).
 * Further versions (TBD)
