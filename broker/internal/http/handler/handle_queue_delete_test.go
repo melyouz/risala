@@ -38,9 +38,9 @@ func setupQueueDeleteTest(t *testing.T, queues map[string]*internal.Queue, excha
 func TestHandleQueueDelete(t *testing.T) {
 
 	queues := map[string]*internal.Queue{
-		"events":             util.NewTestQueueDurableWithoutMessages("events"),
-		"tmp":                util.NewTestQueueTransientWithoutMessages("tmp"),
-		"system.dead-letter": util.NewTestSystemQueueWithoutMessages("system.dead-letter"),
+		"events":                     util.NewTestQueueDurableWithoutMessages("events"),
+		"tmp":                        util.NewTestQueueTransientWithoutMessages("tmp"),
+		internal.DeadLetterQueueName: util.NewTestSystemQueueWithoutMessages(internal.DeadLetterQueueName),
 	}
 
 	t.Run("Returns accepted when queue exists", func(t *testing.T) {
@@ -59,8 +59,8 @@ func TestHandleQueueDelete(t *testing.T) {
 
 	t.Run("Returns conflict error when deleting system queue", func(t *testing.T) {
 
-		response, _ := setupQueueDeleteTest(t, queues, "system.dead-letter")
+		response, _ := setupQueueDeleteTest(t, queues, internal.DeadLetterQueueName)
 
-		util.AssertConflict(t, response, "QUEUE_NON_DELETABLE", "Cannot delete system Queue 'system.dead-letter'")
+		util.AssertConflict(t, response, "QUEUE_NON_DELETABLE", fmt.Sprintf("Cannot delete system Queue '%s'", internal.DeadLetterQueueName))
 	})
 }

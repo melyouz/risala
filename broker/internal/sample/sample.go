@@ -42,8 +42,8 @@ var Queues = map[string]*internal.Queue{
 			{Id: uuid.New(), Payload: "Message 5 (tmp)"},
 		},
 	},
-	"system.dead-letter": {
-		Name:       "system.dead-letter",
+	internal.DeadLetterQueueName: {
+		Name:       internal.DeadLetterQueueName,
 		Durability: internal.Durability.DURABLE,
 		System:     true,
 		Messages:   []*internal.Message{},

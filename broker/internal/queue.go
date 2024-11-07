@@ -14,6 +14,8 @@ import (
 	"github.com/melyouz/risala/broker/internal/errs"
 )
 
+const DeadLetterQueueName = "system.dead-letter"
+
 type Queue struct {
 	sync.RWMutex
 	Name       string         `json:"name" validate:"required"`
@@ -41,8 +43,8 @@ func (q *Queue) Dequeue() (message *Message) {
 	}
 
 	for _, m := range q.Messages {
-		if !m.IsAwaiting() {
-			m.Await()
+		if !m.IsProcessing() {
+			m.MarkProcessing()
 			return m
 		}
 	}
@@ -55,7 +57,7 @@ func (q *Queue) Ack(messageId uuid.UUID) (err errs.AppError) {
 	defer q.Unlock()
 
 	for i, m := range q.Messages {
-		if m.Id == messageId && m.IsAwaiting() {
+		if m.Id == messageId && m.IsProcessing() {
 			q.Messages = slices.Delete(q.Messages, i, i+1)
 			return nil
 		}
@@ -64,28 +66,35 @@ func (q *Queue) Ack(messageId uuid.UUID) (err errs.AppError) {
 	return errs.NewMessageNotFoundError(fmt.Sprintf("Message '%s' not found", messageId.String()))
 }
 
+func (q *Queue) Nack(messageId uuid.UUID) (message *Message, err errs.AppError) {
+	q.Lock()
+	defer q.Unlock()
+
+	for i, m := range q.Messages {
+		if m.Id == messageId && m.IsProcessing() {
+			m.UnmarkProcessing()
+			q.Messages = slices.Delete(q.Messages, i, i+1)
+			return m, nil
+		}
+	}
+
+	return nil, errs.NewMessageNotFoundError(fmt.Sprintf("Message '%s' not found", messageId.String()))
+}
+
 func (q *Queue) Peek(limit int) (messages []*Message, err errs.AppError) {
 	q.Lock()
 	defer q.Unlock()
 
-	result := make([]*Message, 0)
-
 	messagesCount := len(q.Messages)
-	if messagesCount == 0 {
-		return result, nil
+	if messagesCount == 0 || limit <= 0 {
+		return make([]*Message, 0), nil
 	}
 
 	if limit > messagesCount {
 		limit = messagesCount
 	}
 
-	for _, m := range q.Messages {
-		if !m.IsAwaiting() && len(result) < limit {
-			result = append(result, m)
-		}
-	}
-
-	return result, nil
+	return q.Messages[:limit], nil
 }
 
 func (q *Queue) Purge() (err errs.AppError) {

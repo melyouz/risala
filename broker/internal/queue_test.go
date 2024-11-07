@@ -16,7 +16,7 @@ import (
 
 func TestQueueConcurrency(t *testing.T) {
 	t.Parallel()
-	t.Run("Messages are marked as awaiting when queued & dequeued", func(t *testing.T) {
+	t.Run("Messages are marked as processing when queued & dequeued", func(t *testing.T) {
 		t.Parallel()
 		q := &Queue{Name: "testQueue", Durability: Durability.DURABLE}
 		var wg sync.WaitGroup
@@ -47,7 +47,7 @@ func TestQueueConcurrency(t *testing.T) {
 					time.Sleep(10 * time.Millisecond)
 				}
 				assert.NotNil(t, message)
-				assert.True(t, message.IsAwaiting())
+				assert.True(t, message.IsProcessing())
 			}()
 		}
 
@@ -55,7 +55,7 @@ func TestQueueConcurrency(t *testing.T) {
 
 		assert.Len(t, q.Messages, numOperations)
 		for _, m := range q.Messages {
-			assert.True(t, m.IsAwaiting(), "All messages should be marked as awaiting")
+			assert.True(t, m.IsProcessing(), "All messages should be marked as processing")
 		}
 	})
 
@@ -90,7 +90,7 @@ func TestQueueConcurrency(t *testing.T) {
 					time.Sleep(10 * time.Millisecond)
 				}
 				assert.NotNil(t, message)
-				assert.True(t, message.IsAwaiting())
+				assert.True(t, message.IsProcessing())
 
 				ackErr := q.Ack(message.Id)
 				assert.Nil(t, ackErr)

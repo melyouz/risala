@@ -23,6 +23,9 @@ func (s *Server) RegisterRoutes() {
 	queuesRouter.Get("/{queueName}/messages/peek", handler.HandleQueueMessagePeek(s.queueRepository))
 	queuesRouter.Post("/{queueName}/messages/consume", handler.HandleQueueMessageConsume(s.queueRepository))
 	queuesRouter.Post("/{queueName}/messages/purge", handler.HandleQueueMessagePurge(s.queueRepository))
+	queuesRouter.Post("/{queueName}/messages/get", handler.HandleQueueMessageGet(s.queueRepository))
+	queuesRouter.Post("/{queueName}/messages/{messageId}/ack", handler.HandleQueueMessageAck(s.queueRepository))
+	queuesRouter.Post("/{queueName}/messages/{messageId}/nack", handler.HandleQueueMessageNack(s.queueRepository))
 
 	// exchanges
 	exchangesRouter := chi.NewRouter()

@@ -29,6 +29,10 @@ func AssertCreated(t *testing.T, response *httptest.ResponseRecorder) {
 	assert.Equal(t, http.StatusCreated, response.Code)
 }
 
+func AssertNoContent(t *testing.T, response *httptest.ResponseRecorder) {
+	assert.Equal(t, http.StatusNoContent, response.Code)
+}
+
 func AssertNotFound(t *testing.T, response *httptest.ResponseRecorder, expectedErrorCode string, expectedErrorMessage string) {
 	assert.Equal(t, http.StatusNotFound, response.Code)
 	jsonResponse := JSONItemResponse(response)

@@ -12,21 +12,28 @@ import (
 
 type Message struct {
 	sync.Mutex
-	Id       uuid.UUID `json:"id" validate:"required"`
-	Payload  string    `json:"payload" validate:"required"`
-	Awaiting bool      `json:"-"`
+	Id         uuid.UUID `json:"id" validate:"required"`
+	Payload    string    `json:"payload" validate:"required"`
+	Processing bool      `json:"isProcessing"`
 }
 
-func (m *Message) Await() {
+func (m *Message) MarkProcessing() {
 	m.Lock()
 	defer m.Unlock()
 
-	m.Awaiting = true
+	m.Processing = true
 }
 
-func (m *Message) IsAwaiting() bool {
+func (m *Message) UnmarkProcessing() {
 	m.Lock()
 	defer m.Unlock()
 
-	return m.Awaiting
+	m.Processing = false
+}
+
+func (m *Message) IsProcessing() bool {
+	m.Lock()
+	defer m.Unlock()
+
+	return m.Processing
 }
