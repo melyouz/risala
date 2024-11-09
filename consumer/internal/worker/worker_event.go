@@ -12,7 +12,6 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	_ "github.com/joho/godotenv/autoload"
 
 	"github.com/melyouz/risala/consumer/internal"
 	"github.com/melyouz/risala/consumer/internal/action"
@@ -33,7 +32,7 @@ func (w *EventWorker) Start() {
 }
 
 func consumeMessages() {
-	eventsQueueEndpoint := util.GetEnvVarStringRequired("EVENTS_QUEUE_ENDPOINT")
+	eventsQueueEndpoint := util.GetEnvVarStringRequired("QUEUE_EVENTS_ENDPOINT")
 	messageConsumeEndpoint := fmt.Sprintf("%s/messages/get", eventsQueueEndpoint)
 	response, connectionErr := http.Post(messageConsumeEndpoint, "application/json", nil)
 	if connectionErr != nil {
@@ -62,7 +61,7 @@ func consumeMessages() {
 		return
 	}
 
-	var event action.Event
+	var event internal.Event
 	if deserializeErr := json.Unmarshal([]byte(rawMessage.Payload), &event); deserializeErr != nil {
 		log.Println("[Worker] Error deserializing message payload:", deserializeErr)
 		return
@@ -71,7 +70,7 @@ func consumeMessages() {
 	processEvent(rawMessage.Id, event)
 }
 
-func processEvent(messageId uuid.UUID, event action.Event) {
+func processEvent(messageId uuid.UUID, event internal.Event) {
 	fmt.Println("")
 	log.Println("[Worker] Event process INIT:", event)
 
@@ -88,7 +87,7 @@ func processEvent(messageId uuid.UUID, event action.Event) {
 	log.Println("[Worker] Event process END:", event)
 }
 
-func handleEvent(event action.Event) (eventProcessed bool) {
+func handleEvent(event internal.Event) (eventProcessed bool) {
 	var eventActionFound bool
 
 	for _, eventAction := range action.Actions {
@@ -111,7 +110,7 @@ func handleEvent(event action.Event) (eventProcessed bool) {
 }
 
 func sendAcknowledgement(messageId uuid.UUID, ackType string) {
-	eventsQueueEndpoint := util.GetEnvVarStringRequired("EVENTS_QUEUE_ENDPOINT")
+	eventsQueueEndpoint := util.GetEnvVarStringRequired("QUEUE_EVENTS_ENDPOINT")
 	messageEndpoint := fmt.Sprintf("%s/messages/%s/%s", eventsQueueEndpoint, messageId.String(), ackType)
 	response, connectionErr := http.Post(messageEndpoint, "application/json", nil)
 	if connectionErr != nil {

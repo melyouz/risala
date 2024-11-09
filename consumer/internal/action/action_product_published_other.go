@@ -7,6 +7,7 @@ package action
 import (
 	"fmt"
 
+	"github.com/melyouz/risala/consumer/internal"
 	"github.com/melyouz/risala/consumer/internal/errs"
 )
 
@@ -17,7 +18,7 @@ func (ProductPublishedOtherAction) SupportedType() string {
 	return "product.published"
 }
 
-func (action ProductPublishedOtherAction) Handle(event Event) errs.AppError {
+func (action ProductPublishedOtherAction) Handle(event internal.Event) errs.AppError {
 	fmt.Println("[ProductPublishedOtherAction] Event handled: ", event)
 
 	return nil
