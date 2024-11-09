@@ -2,6 +2,38 @@
 
 gRPC based Message Broker written in Go for self learning purpose.
 
+## Running Locally
+
+Follow these steps to run the project on your local machine:
+
+1. **Install Go v1.23**  
+   Ensure that Go v1.23 is installed. You can download it from [go.dev](https://go.dev/).
+
+2. **Run the Broker**  
+   Start the broker with sample data by navigating to the project directory and running:
+
+   ```bash
+   cd broker && make run WITH_SAMPLE_DATA=1
+   ```
+
+3. **Run the Producer**
+
+   Navigate to the project directory and run the following command to start the producer (adjust EVENTS_COUNT to control the number of generated events):
+   ```bash
+   cd producer && make run EVENTS_COUNT=1000
+   ```
+
+4. **Run the consumer**
+
+   Navigate to the project directory and run the following command to start the consumer:
+   ```bash
+   cd producer && make run
+   ```
+
+> Note: You can run multiple instances of Producers and Consumers.
+
+> UI: Currently, there is no available UI.
+
 ## Roadmap
 
 ![Roadmap image](https://github.com/melyouz/risala/blob/main/roadmap.svg?raw=true)
