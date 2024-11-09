@@ -23,7 +23,11 @@ race:
 .PHONY: run
 run:
 	@echo "Running..."
+ifeq ($(WITH_SAMPLE_DATA),1)
 	@go run cmd/api/main.go --with-sample-data
+else
+	@go run cmd/api/main.go
+endif
 
 .PHONY: cover
 cover:

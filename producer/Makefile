@@ -2,6 +2,10 @@
 BINARY_FILE := "main"
 COVERAGE_FILE := "cover.out"
 
+ifndef EVENTS_COUNT
+override EVENTS_COUNT = 1
+endif
+
 .PHONY: all
 all: build test run
 
@@ -18,7 +22,7 @@ test:
 .PHONY: run
 run:
 	@echo "Running..."
-	@go run cmd/main.go
+	@go run cmd/main.go --events-count $(EVENTS_COUNT)
 
 .PHONY: cover
 cover:
