@@ -18,6 +18,7 @@ import (
 )
 
 func main() {
+	log.Println("init")
 	log.Println("Sending events...")
 
 	eventsCount := flag.Int("events-count", 1000, "Send EVENTS-COUNT events")
@@ -46,5 +47,9 @@ func main() {
 		}
 	}
 
-	log.Printf("Successfully sent %d events", successCount)
+	if successCount > 0 {
+		log.Printf("Successfully sent %d events", successCount)
+	}
+
+	log.Printf("end")
 }

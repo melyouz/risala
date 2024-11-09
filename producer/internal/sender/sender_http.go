@@ -54,8 +54,6 @@ func (s *HTTPEventSender) Send(event internal.Event) errs.AppError {
 			return errs.NewReadError(fmt.Sprintf("Error reading response body: %s", readErr))
 		}
 
-		log.Printf("[Sender] Error response from Broker: %s", string(body))
-
 		var apiErr errs.Error
 		if decodeErr := json.Unmarshal(body, &apiErr); decodeErr != nil {
 			return errs.NewDecodeError(fmt.Sprintf("Error decoding response body: %s", decodeErr))
