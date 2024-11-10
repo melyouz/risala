@@ -27,7 +27,7 @@ Follow these steps to run the project on your local machine:
 
    Navigate to the project directory and run the following command to start the consumer:
    ```bash
-   cd producer && make run
+   cd consumer && make run
    ```
 
 > Note: You can run multiple instances of Producers and Consumers.
