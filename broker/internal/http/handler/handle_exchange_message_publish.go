@@ -30,7 +30,7 @@ func HandleExchangeMessagePublish(
 
 		var vErrors validator.ValidationErrors
 		if errors.As(validate.Struct(&message), &vErrors) {
-			util.Respond(w, errs.NewValidationError(vErrors), http.StatusBadRequest)
+			util.Respond(w, errs.NewValidationError(vErrors), http.StatusUnprocessableEntity)
 			return
 		}
 
@@ -55,6 +55,6 @@ func HandleExchangeMessagePublish(
 			}
 		}
 
-		util.Respond(w, nil, http.StatusOK)
+		util.Respond(w, &message, http.StatusCreated)
 	}
 }

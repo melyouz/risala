@@ -52,7 +52,7 @@ func TestHandleExchangeBindingDelete(t *testing.T) {
 
 		response, _ := setupExchangeBindingDeleteTest(t, exchanges, "app.internal", exchanges["app.internal"].Bindings[0].Id.String())
 
-		util.AssertAccepted(t, response)
+		util.AssertNoContent(t, response)
 	})
 
 	t.Run("Returns not found error when exchange does not exist", func(t *testing.T) {

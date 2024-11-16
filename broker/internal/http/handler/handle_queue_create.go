@@ -24,7 +24,7 @@ func HandleQueueCreate(queueRepository storage.QueueRepository, validate *valida
 
 		var vErrors validator.ValidationErrors
 		if errors.As(validate.Struct(&queue), &vErrors) {
-			util.Respond(w, errs.NewValidationError(vErrors), http.StatusBadRequest)
+			util.Respond(w, errs.NewValidationError(vErrors), http.StatusUnprocessableEntity)
 			return
 		}
 

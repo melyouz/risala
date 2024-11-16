@@ -26,7 +26,7 @@ func HandleExchangeBindingAdd(exchangeRepository storage.ExchangeRepository, que
 
 		var vErrors validator.ValidationErrors
 		if errors.As(validate.Struct(binding), &vErrors) {
-			util.Respond(w, errs.NewValidationError(vErrors), http.StatusBadRequest)
+			util.Respond(w, errs.NewValidationError(vErrors), http.StatusUnprocessableEntity)
 			return
 		}
 

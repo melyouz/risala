@@ -62,7 +62,7 @@ func TestHandleQueueMessageAck(t *testing.T) {
 
 		response, _ := setupQueueMessageAckTest(t, queues, "events", messageId)
 
-		util.AssertAccepted(t, response)
+		util.AssertNoContent(t, response)
 		assert.Len(t, queues["events"].Messages, initialMessageCount-1)
 		assert.Len(t, queues[internal.DeadLetterQueueName].Messages, 0)
 	})

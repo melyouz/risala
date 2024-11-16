@@ -38,6 +38,6 @@ func HandleQueueMessageAck(queueRepository storage.QueueRepository) http.Handler
 			return
 		}
 
-		util.Respond(w, nil, http.StatusAccepted)
+		util.Respond(w, nil, http.StatusNoContent)
 	}
 }

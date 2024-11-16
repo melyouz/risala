@@ -38,6 +38,6 @@ func HandleExchangeBindingDelete(exchangeRepository storage.ExchangeRepository) 
 			return
 		}
 
-		util.Respond(w, nil, http.StatusAccepted)
+		util.Respond(w, nil, http.StatusNoContent)
 	}
 }

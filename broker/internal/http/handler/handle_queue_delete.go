@@ -21,6 +21,6 @@ func HandleQueueDelete(queueRepository storage.QueueRepository) http.HandlerFunc
 			util.Respond(w, err, util.HttpStatusCodeFromAppError(err))
 			return
 		}
-		util.Respond(w, nil, http.StatusAccepted)
+		util.Respond(w, nil, http.StatusNoContent)
 	}
 }

@@ -44,7 +44,7 @@ func TestHandleExchangeDelete(t *testing.T) {
 	t.Run("Returns accepted when exchange exists", func(t *testing.T) {
 		response, _ := setupExchangeDeleteTest(t, exchanges, "app.external")
 
-		util.AssertAccepted(t, response)
+		util.AssertNoContent(t, response)
 	})
 
 	t.Run("Returns not found when exchange does not exist", func(t *testing.T) {

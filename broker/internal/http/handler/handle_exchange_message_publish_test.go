@@ -59,14 +59,17 @@ func TestHandleExchangeMessagePublish(t *testing.T) {
 	t.Run("Publishes message when validations pass & queue binding exists", func(t *testing.T) {
 
 		messageBody, _ := json.Marshal(map[string]interface{}{
-			"payload": "Hello world!",
+			"payload": "Hello world from Exchange",
 		})
 
 		tmpQueueMessagesCount := len(queues["tmp"].Messages)
 		response, _ := setupExchangeMessagePublishTest(t, queues, exchanges, "app.internal", messageBody)
 
-		util.AssertOk(t, response)
-		assert.Empty(t, response.Body)
+		util.AssertCreated(t, response)
+		var jsonResponse map[string]interface{}
+		_ = json.Unmarshal(response.Body.Bytes(), &jsonResponse)
+		assert.NotEmpty(t, jsonResponse["id"])
+		assert.Equal(t, "Hello world from Exchange", jsonResponse["payload"])
 		assert.Len(t, queues["tmp"].Messages, tmpQueueMessagesCount+1)
 	})
 

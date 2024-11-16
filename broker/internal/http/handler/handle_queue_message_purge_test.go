@@ -57,7 +57,7 @@ func TestHandleQueueMessagePurge(t *testing.T) {
 
 		response, _ := setupQueueMessagePurgeTest(t, queues, "events")
 
-		util.AssertAccepted(t, response)
+		util.AssertNoContent(t, response)
 		assert.Empty(t, response.Body)
 		assert.Empty(t, queues["events"].Messages)
 	})

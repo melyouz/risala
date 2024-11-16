@@ -21,10 +21,6 @@ func AssertOk(t *testing.T, response *httptest.ResponseRecorder) {
 	assert.Equal(t, http.StatusOK, response.Code)
 }
 
-func AssertAccepted(t *testing.T, response *httptest.ResponseRecorder) {
-	assert.Equal(t, http.StatusAccepted, response.Code)
-}
-
 func AssertCreated(t *testing.T, response *httptest.ResponseRecorder) {
 	assert.Equal(t, http.StatusCreated, response.Code)
 }
@@ -41,7 +37,7 @@ func AssertNotFound(t *testing.T, response *httptest.ResponseRecorder, expectedE
 }
 
 func AssertValidationErrors(t *testing.T, response *httptest.ResponseRecorder, expectedErrors []errs.ValidationError) {
-	assert.Equal(t, http.StatusBadRequest, response.Code)
+	assert.Equal(t, http.StatusUnprocessableEntity, response.Code)
 	jsonResponse := JSONItemResponse(response)
 	assert.Equal(t, "VALIDATION_ERROR", jsonResponse["code"])
 	assert.Len(t, jsonResponse["errors"], len(expectedErrors))

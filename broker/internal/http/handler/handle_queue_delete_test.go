@@ -47,7 +47,7 @@ func TestHandleQueueDelete(t *testing.T) {
 
 		response, _ := setupQueueDeleteTest(t, queues, "events")
 
-		util.AssertAccepted(t, response)
+		util.AssertNoContent(t, response)
 	})
 
 	t.Run("Returns not found when queue does not exist", func(t *testing.T) {

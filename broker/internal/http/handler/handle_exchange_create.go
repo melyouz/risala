@@ -24,7 +24,7 @@ func HandleExchangeCreate(exchangeRepository storage.ExchangeRepository, validat
 
 		var vErrors validator.ValidationErrors
 		if errors.As(validate.Struct(&exchange), &vErrors) {
-			util.Respond(w, errs.NewValidationError(vErrors), http.StatusBadRequest)
+			util.Respond(w, errs.NewValidationError(vErrors), http.StatusUnprocessableEntity)
 			return
 		}
 
