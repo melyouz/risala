@@ -1,0 +1,719 @@
+
+"openapi": "3.0.3"
+"info":
+  "title": "Risala Broker API"
+  "version": "1.0.0"
+"servers":
+  -
+    "url": "http://localhost:8000/api/v1"
+    "description": "local"
+"tags":
+  -
+    "name": "queues"
+  -
+    "name": "messages"
+  -
+    "name": "exchanges"
+  -
+    "name": "bindings"
+"paths":
+  "/queues":
+    "post":
+      "tags":
+        - "queues"
+      "summary": "Create Queue"
+      "operationId": "queueCreate"
+      "requestBody":
+        "content":
+          "application/json":
+            "schema":
+              "type": "object"
+              "properties":
+                "name":
+                  "type": "string"
+                "durability":
+                  "type": "string"
+                  "enum":
+                    - "durable"
+                    - "transient"
+        "required": true
+      "responses":
+        "201":
+          "description": "Successful operation"
+          "content":
+            "application/json":
+              "schema":
+                "type": "object"
+                "properties":
+                  "name":
+                    "type": "string"
+                  "durability":
+                    "type": "string"
+                    "enum":
+                      - "durable"
+                      - "transient"
+                  "isSystem":
+                    "type": "boolean"
+        "422":
+          "description": "Validation exception"
+        "409":
+          "description": "Conflict (e.g. Queue already exists)"
+    "get":
+      "tags":
+        - "queues"
+      "summary": "Find Queues"
+      "operationId": "queueFind"
+      "responses":
+        "200":
+          "description": "Successful operation"
+          "content":
+            "application/json":
+              "schema":
+                "type": "array"
+                "items":
+                  "type": "object"
+                  "properties":
+                    "name":
+                      "type": "string"
+                    "durability":
+                      "type": "string"
+                      "enum":
+                        - "durable"
+                        - "transient"
+                    "isSystem":
+                      "type": "boolean"
+  "/queues/{queueName}":
+    "get":
+      "tags":
+        - "queues"
+      "summary": "Get Queue"
+      "operationId": "queueGet"
+      "parameters":
+        -
+          "name": "queueName"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+      "responses":
+        "200":
+          "description": "Successful operation"
+          "content":
+            "application/json":
+              "schema":
+                "type": "object"
+                "properties":
+                  "name":
+                    "type": "string"
+                  "durability":
+                    "type": "string"
+                    "enum":
+                      - "durable"
+                      - "transient"
+                  "isSystem":
+                    "type": "boolean"
+        "404":
+          "description": "Queue Not Found"
+    "delete":
+      "tags":
+        - "queues"
+      "summary": "Delete Queue"
+      "operationId": "queueDelete"
+      "parameters":
+        -
+          "name": "queueName"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+      "responses":
+        "204":
+          "description": "Successful operation"
+        "404":
+          "description": "Queue Not Found"
+  "/queues/{queueName}/messages":
+    "post":
+      "tags":
+        - "queues"
+        - "messages"
+      "summary": "Publish message to Queue"
+      "operationId": "queueMessagePublish"
+      "parameters":
+        -
+          "name": "queueName"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+      "requestBody":
+        "content":
+          "application/json":
+            "schema":
+              "type": "object"
+              "properties":
+                "payload":
+                  "type": "string"
+        "required": true
+      "responses":
+        "201":
+          "description": "Successful operation"
+          "content":
+            "application/json":
+              "schema":
+                "type": "object"
+                "properties":
+                  "id":
+                    "type": "string"
+                    "format": "uuid"
+                  "payload":
+                    "type": "string"
+                  "isProcessing":
+                    "type": "boolean"
+        "422":
+          "description": "Validation exception"
+        "404":
+          "description": "Queue Not Found"
+  "/queues/{queueName}/messages/peek":
+    "get":
+      "tags":
+        - "queues"
+        - "messages"
+      "summary": "Peek/view messages"
+      "description": "Peek/view messages without consuming them (no processing nor acknowledgement is done)"
+      "operationId": "queueMessagePeek"
+      "parameters":
+        -
+          "name": "queueName"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+        -
+          "name": "limit"
+          "in": "query"
+          "required": false
+          "schema":
+            "type": "integer"
+            "minimum": 1
+      "responses":
+        "200":
+          "description": "Successful operation"
+          "content":
+            "application/json":
+              "schema":
+                "type": "array"
+                "items":
+                  "type": "object"
+                  "properties":
+                    "id":
+                      "type": "string"
+                      "format": "uuid"
+                    "payload":
+                      "type": "string"
+                    "isProcessing":
+                      "type": "boolean"
+        "404":
+          "description": "Queue Not Found"
+  "/queues/{queueName}/messages/consume":
+    "post":
+      "tags":
+        - "queues"
+        - "messages"
+      "summary": "Consume messages"
+      "description": "Get a list of automatically acknowledged messages"
+      "operationId": "queueMessageConsume"
+      "parameters":
+        -
+          "name": "queueName"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+        -
+          "name": "limit"
+          "in": "query"
+          "required": false
+          "schema":
+            "type": "integer"
+            "minimum": 1
+      "responses":
+        "200":
+          "description": "Successful operation"
+          "content":
+            "application/json":
+              "schema":
+                "type": "array"
+                "items":
+                  "type": "object"
+                  "properties":
+                    "id":
+                      "type": "string"
+                      "format": "uuid"
+                    "payload":
+                      "type": "string"
+                    "isProcessing":
+                      "type": "boolean"
+        "404":
+          "description": "Queue Not Found"
+  "/queues/{queueName}/messages/purge":
+    "post":
+      "tags":
+        - "queues"
+        - "messages"
+      "summary": "Purge messages"
+      "description": "Discard all messages from the Queue"
+      "operationId": "queueMessagePurge"
+      "parameters":
+        -
+          "name": "queueName"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+      "responses":
+        "204":
+          "description": "Successful operation"
+        "404":
+          "description": "Queue or Message Not Found"
+  "/queues/{queueName}/messages/get":
+    "post":
+      "tags":
+        - "queues"
+        - "messages"
+      "summary": "Get first available message"
+      "description": "Get first available message for processing"
+      "operationId": "queueMessageGet"
+      "parameters":
+        -
+          "name": "queueName"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+      "responses":
+        "200":
+          "description": "Successful operation"
+          "content":
+            "application/json":
+              "schema":
+                "type": "object"
+                "properties":
+                  "id":
+                    "type": "string"
+                    "format": "uuid"
+                  "payload":
+                    "type": "string"
+                  "isProcessing":
+                    "type": "boolean"
+        "204":
+          "description": "No message available for processing"
+        "404":
+          "description": "Queue Not Found"
+  "/queues/{queueName}/messages/{messageId}/ack":
+    "post":
+      "tags":
+        - "queues"
+        - "messages"
+      "summary": "Acknowledge message"
+      "description": "Acknowledged message is automatically discarded from the queue"
+      "operationId": "queueMessageAck"
+      "parameters":
+        -
+          "name": "queueName"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+        -
+          "name": "messageId"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+            "format": "uuid"
+      "responses":
+        "204":
+          "description": "Successful operation"
+        "400":
+          "description": "Invalid input (e.g. invalid messageId format)"
+        "404":
+          "description": "Queue or Message Not Found"
+  "/queues/{queueName}/messages/{messageId}/nack":
+    "post":
+      "tags":
+        - "queues"
+      "summary": "Negative acknowledge message"
+      "description": "Negative acknowledged message is moved to Dead Letter Queue (system.dead-letter)"
+      "operationId": "queueMessageNack"
+      "parameters":
+        -
+          "name": "queueName"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+        -
+          "name": "messageId"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+            "format": "uuid"
+      "responses":
+        "204":
+          "description": "Successful operation"
+        "400":
+          "description": "Invalid input (e.g. invalid messageId format)"
+        "404":
+          "description": "Queue or Message Not Found"
+  "/exchanges":
+    "post":
+      "tags":
+        - "exchanges"
+      "summary": "Create Exchange"
+      "operationId": "exchangeCreate"
+      "requestBody":
+        "content":
+          "application/json":
+            "schema":
+              "type": "object"
+              "properties":
+                "name":
+                  "type": "string"
+        "required": true
+      "responses":
+        "201":
+          "description": "Successful operation"
+          "content":
+            "application/json":
+              "schema":
+                "type": "object"
+                "properties":
+                  "name":
+                    "type": "string"
+                  "bindings":
+                    "type": "array"
+                    "items":
+                      "type": "object"
+                      "properties":
+                        "id":
+                          "type": "string"
+                          "format": "uuid"
+                        "queue":
+                          "type": "string"
+                        "routingKey":
+                          "type": "string"
+                          "example": "#"
+        "422":
+          "description": "Validation exception"
+        "409":
+          "description": "Conflict (e.g. Exchange already exists)"
+    "get":
+      "tags":
+        - "exchanges"
+      "summary": "Find Exchanges"
+      "operationId": "exchangeFind"
+      "responses":
+        "200":
+          "description": "Successful operation"
+          "content":
+            "application/json":
+              "schema":
+                "type": "array"
+                "items":
+                  "type": "object"
+                  "properties":
+                    "name":
+                      "type": "string"
+                    "bindings":
+                      "type": "array"
+                      "items":
+                        "type": "object"
+                        "properties":
+                          "id":
+                            "type": "string"
+                            "format": "uuid"
+                          "queue":
+                            "type": "string"
+                          "routingKey":
+                            "type": "string"
+                            "example": "#"
+  "/exchanges/{exchangeName}":
+    "get":
+      "tags":
+        - "exchanges"
+      "summary": "Get Exchange"
+      "operationId": "exchangeGet"
+      "parameters":
+        -
+          "name": "exchangeName"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+      "responses":
+        "200":
+          "description": "Successful operation"
+          "content":
+            "application/json":
+              "schema":
+                "type": "object"
+                "properties":
+                  "name":
+                    "type": "string"
+                  "durability":
+                    "type": "string"
+                    "enum":
+                      - "durable"
+                      - "transient"
+                  "isSystem":
+                    "type": "boolean"
+        "404":
+          "description": "Exchange Not Found"
+    "delete":
+      "tags":
+        - "exchanges"
+      "summary": "Delete Exchange"
+      "operationId": "exchangeDelete"
+      "parameters":
+        -
+          "name": "exchangeName"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+      "responses":
+        "204":
+          "description": "Successful operation"
+        "404":
+          "description": "Exchange Not Found"
+  "/exchanges/{exchangeName}/bindings":
+    "post":
+      "tags":
+        - "exchanges"
+        - "bindings"
+      "summary": "Add Binding"
+      "operationId": "exchangeBindingAdd"
+      "parameters":
+        -
+          "name": "exchangeName"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+      "requestBody":
+        "content":
+          "application/json":
+            "schema":
+              "type": "object"
+              "properties":
+                "queue":
+                  "type": "string"
+                "routingKey":
+                  "type": "string"
+                  "example": "#"
+        "required": true
+      "responses":
+        "200":
+          "description": "Successful operation"
+          "content":
+            "application/json":
+              "schema":
+                "type": "object"
+                "properties":
+                  "id":
+                    "type": "string"
+                    "format": "uuid"
+                  "queue":
+                    "type": "string"
+                  "routingKey":
+                    "type": "string"
+                    "example": "#"
+        "404":
+          "description": "Exchange or Queue Not Found"
+        "422":
+          "description": "Validation exception"
+  "/exchanges/{exchangeName}/bindings/{bindingId}":
+    "delete":
+      "tags":
+        - "exchanges"
+        - "bindings"
+      "summary": "Delete Binding"
+      "operationId": "exchangeBindingDelete"
+      "parameters":
+        -
+          "name": "exchangeName"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+        -
+          "name": "bindingId"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+            "format": "uuid"
+      "responses":
+        "204":
+          "description": "Successful operation"
+        "404":
+          "description": "Exchange or Binding Not Found"
+  "/exchanges/{exchangeName}/messages":
+    "post":
+      "tags":
+        - "exchanges"
+        - "messages"
+      "summary": "Publish message to Exchange"
+      "operationId": "exchangeMessagePublish"
+      "parameters":
+        -
+          "name": "exchangeName"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+      "requestBody":
+        "content":
+          "application/json":
+            "schema":
+              "type": "object"
+              "properties":
+                "payload":
+                  "type": "string"
+        "required": true
+      "responses":
+        "201":
+          "description": "Successful operation"
+          "content":
+            "application/json":
+              "schema":
+                "type": "object"
+                "properties":
+                  "id":
+                    "type": "string"
+                    "format": "uuid"
+                  "payload":
+                    "type": "string"
+                  "isProcessing":
+                    "type": "boolean"
+        "422":
+          "description": "Validation exception"
+        "404":
+          "description": "Exchange Not Found"
+"components":
+  "schemas":
+    "QueueRequest":
+      "type": "object"
+      "properties":
+        "name":
+          "type": "string"
+        "durability":
+          "type": "string"
+          "enum":
+            - "durable"
+            - "transient"
+    "QueueResponse":
+      "type": "object"
+      "properties":
+        "name":
+          "type": "string"
+        "durability":
+          "type": "string"
+          "enum":
+            - "durable"
+            - "transient"
+        "isSystem":
+          "type": "boolean"
+    "MessageRequest":
+      "type": "object"
+      "properties":
+        "payload":
+          "type": "string"
+    "MessageResponse":
+      "type": "object"
+      "properties":
+        "id":
+          "type": "string"
+          "format": "uuid"
+        "payload":
+          "type": "string"
+        "isProcessing":
+          "type": "boolean"
+    "ExchangeRequest":
+      "type": "object"
+      "properties":
+        "name":
+          "type": "string"
+    "ExchangeResponse":
+      "type": "object"
+      "properties":
+        "name":
+          "type": "string"
+        "bindings":
+          "type": "array"
+          "items":
+            "type": "object"
+            "properties":
+              "id":
+                "type": "string"
+                "format": "uuid"
+              "queue":
+                "type": "string"
+              "routingKey":
+                "type": "string"
+                "example": "#"
+    "BindingRequest":
+      "type": "object"
+      "properties":
+        "queue":
+          "type": "string"
+        "routingKey":
+          "type": "string"
+          "example": "#"
+    "BindingResponse":
+      "type": "object"
+      "properties":
+        "id":
+          "type": "string"
+          "format": "uuid"
+        "queue":
+          "type": "string"
+        "routingKey":
+          "type": "string"
+          "example": "#"
+    "ErrorResponse":
+      "type": "object"
+      "properties":
+        "code":
+          "type": "string"
+        "message":
+          "type": "string"
+    "InvalidParamErrorResponse":
+      "type": "object"
+      "properties":
+        "code":
+          "type": "string"
+        "param":
+          "type": "string"
+    "ValidationErrorResponse":
+      "type": "object"
+      "properties":
+        "field":
+          "type": "string"
+        "message":
+          "type": "string"
+    "ValidationErrorsResponse":
+      "type": "object"
+      "properties":
+        "code":
+          "type": "string"
+        "errors":
+          "type": "array"
+          "items":
+            "type": "object"
+            "properties":
+              "field":
+                "type": "string"
+              "message":
+                "type": "string"

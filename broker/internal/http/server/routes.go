@@ -5,12 +5,18 @@
 package server
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/go-chi/chi/v5"
+	httpSwagger "github.com/swaggo/http-swagger"
 
 	"github.com/melyouz/risala/broker/internal/http/handler"
 )
 
 const ApiV1BasePath = "/api/v1"
+const apiV1DocsBasePath = "/api/v1/docs"
+const ApiV1OpenApiSpecJsonFilePath = "docs/api/openapi3_0.json"
 
 func (s *Server) RegisterRoutes() {
 	// queues
@@ -37,9 +43,21 @@ func (s *Server) RegisterRoutes() {
 	exchangesRouter.Delete("/{exchangeName}/bindings/{bindingId}", handler.HandleExchangeBindingDelete(s.exchangeRepository))
 	exchangesRouter.Post("/{exchangeName}/messages/publish", handler.HandleExchangeMessagePublish(s.exchangeRepository, s.queueRepository, s.validate))
 
-	// main router
+	// v1 routes group
 	s.router.Route(ApiV1BasePath, func(r chi.Router) {
 		r.Mount("/queues", queuesRouter)
 		r.Mount("/exchanges", exchangesRouter)
 	})
+
+	// docs
+	s.router.Get(fmt.Sprintf("/%s", ApiV1OpenApiSpecJsonFilePath), func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, ApiV1OpenApiSpecJsonFilePath)
+	})
+	s.router.Get("/api*", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, fmt.Sprintf("%s/index.html", apiV1DocsBasePath), http.StatusPermanentRedirect)
+	})
+	s.router.Get(fmt.Sprintf("%s/*", apiV1DocsBasePath), httpSwagger.Handler(
+		httpSwagger.URL(fmt.Sprintf("http://localhost:8000/%s", ApiV1OpenApiSpecJsonFilePath)),
+		httpSwagger.AfterScript(`document.querySelectorAll(".topbar")[0].remove();`),
+	))
 }

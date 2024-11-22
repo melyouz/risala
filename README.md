@@ -34,6 +34,17 @@ Follow these steps to run the project on your local machine:
 
 > UI: Currently, there is no available UI.
 
+## API Documentation
+
+1. **Run the Broker**  
+   Start the broker with sample data by navigating to the project directory and running:
+
+   ```bash
+   cd broker && make run WITH_SAMPLE_DATA=1
+   ```
+
+2. Navigate to [API Documentation](http://localhost:8000/api/v1/docs/index.html) (Swagger UI).
+
 ## Roadmap
 
 ![Roadmap image](https://github.com/melyouz/risala/blob/main/roadmap.svg?raw=true)
@@ -52,7 +63,7 @@ Follow these steps to run the project on your local machine:
     * ~~Process (get) a message.~~
     * ~~Acknowledge (ack) a message.~~
     * ~~Negatively acknowledge (nack) a message.~~
-    * API documentation.
+    * ~~API documentation.~~
   + Consumer
     * ~~Consume messages (HTTP API).~~
     * ~~Acknowledge messages (HTTP API).~~
