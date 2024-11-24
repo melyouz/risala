@@ -49,27 +49,19 @@ Follow these steps to run the project on your local machine:
 
 ![Roadmap image](https://github.com/melyouz/risala/blob/main/roadmap.svg?raw=true)
 
-* v0.0.1 (MVP)
+* v1.0.0 ([released](https://github.com/melyouz/risala/releases/tag/v1.0.0))
+* v1.1.0
   + Broker
-    * ~~Manage Exchanges (create, list, get, delete).~~
-    * ~~Manage Queues (create, list, get, delete).~~
-    * ~~Manage Bindings (create, delete).~~
-    * ~~Publish messages to queue.~~
-    * ~~Publish messages to exchange.~~
-    * ~~Peek queue messages.~~
-    * ~~Consume & acknowledge queue messages.~~
-    * ~~Purge queue messages.~~
-    * ~~Dead Letter queue.~~
-    * ~~Process (get) a message.~~
-    * ~~Acknowledge (ack) a message.~~
-    * ~~Negatively acknowledge (nack) a message.~~
-    * ~~API documentation.~~
-  + Consumer
-    * ~~Consume messages (HTTP API).~~
-    * ~~Acknowledge messages (HTTP API).~~
-    * ~~Negatively acknowledge messages (HTTP API).~~
+      * Publish messages (gRPC).
+      * Consume messages (gRPC).
+      * Acknowledge messages (gRPC).
+      * Negatively acknowledge messages (gRPC).
   + Producer
-    * ~~Publish messages (HTTP API).~~
+    * Publish messages (gRPC).
+  + Consumer
+    * Consume messages (gRPC).
+    * Acknowledge messages (gRPC).
+    * Negatively acknowledge messages (gRPC).
 * Further versions (TBD)
   + Broker
     * Retry mechanism.
@@ -88,13 +80,9 @@ Follow these steps to run the project on your local machine:
     * Tracing (e.g. Zipkin).
     * Logging (e.g. Vector + Grafana Loki, Datadog, ...).
   + Consumer
-    * Consume messages (gRPC).
-    * Acknowledge messages (gRPC).
-    * Negatively acknowledge messages (gRPC).
     * Tracing.
     * Logging.
   + Producer
-    * Publish messages (gRPC).
     * Tracing.
     * Logging.
 
